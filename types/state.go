@@ -1,0 +1,14 @@
+package types
+
+type State uint8
+
+const (
+	WHITE_TURN State = iota
+	BLACK_TURN
+	WHITE_CHECK
+	BLACK_CHECK
+	WHITE_CHECKMATE
+	BLACK_CHECKMATE
+	STALEMATE
+	PAUSE
+)
