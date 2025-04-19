@@ -11,6 +11,17 @@ Chess game with some additions made to learn golang.
 - [x] 0-indexed cell notation to make moves.
 - [ ] Mathematical notation to make moves.
 - [ ] Move validation.
+  - [ ] Pawn.
+  - [ ] King.
+  - [ ] Queen.
+  - [ ] Rook.
+  - [ ] Bishop.
+  - [ ] Knight.
+- [ ] Piece kill count.
+- [ ] Rule sets.
+  - [ ] Classic.
+  - [ ] Score-based (kill count).
+  - [ ] Instagib (check == checkmate)
 - [ ] Game replay.
 - [ ] Undo tree.
 
