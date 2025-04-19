@@ -34,12 +34,31 @@ func NewTemplate() *Template {
 			"string": func(x types.Type) string {
 				return string(x)
 			},
+			"state" : func(m types.State) string {
+				switch m {
+				case types.WHITE_TURN:
+					return "Ходят белые"
+				case types.BLACK_TURN:
+					return "Ходят черные"
+				case types.WHITE_CHECK:
+					return "Шах белому королю"
+				case types.BLACK_CHECK:
+					return "Шах черному королю"
+				case types.WHITE_CHECKMATE:
+					return "Мат белому королю"
+				case types.BLACK_CHECKMATE:
+					return "Мат черному королю"
+				case types.STALEMATE:
+					return "Пат"
+				default:
+					return "Unknown state"
+				}
+			},
 		}).ParseGlob("web/*.templ")),
 	}
 }
 
 func main() {
-	fmt.Println(game)
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Renderer = NewTemplate()
@@ -59,13 +78,18 @@ func Move(c echo.Context) error {
 	fx, _ := strconv.Atoi(c.QueryParam("fx"))
 	fy, _ := strconv.Atoi(c.QueryParam("fy"))
 	fmt.Println(ix, iy, fx, fy)
-	game.MovePiece(ix, iy, fx, fy)
+	err := game.MovePiece(ix, iy, fx, fy)
+
+	if err != nil {
+		c.Logger().Error(err)
+	}
 
 	return c.Render(http.StatusOK, "board.html.templ", game)
 }
 
 func Restart(c echo.Context) error {
 	game = board.NewGame()
+	c.Logger().Warn("game restated")
 
 	return c.Render(http.StatusOK, "board.html.templ", game)
 }

@@ -51,7 +51,7 @@
 <body>
     <h1>Let's play some chess!</h1>
     <button id="restart">Restart</button>
-
+    <h1>{{state .State}}</h1>
     <div>
         {{range $keyX, $valueX := .Board}}
         <row>
