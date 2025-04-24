@@ -3,7 +3,7 @@ package types
 type Pos int8
 
 func NewPos(x, y int) Pos {
-	return Pos(y * 8 + x)
+	return Pos(y*8 + x)
 }
 
 func (p Pos) IsValid() bool {

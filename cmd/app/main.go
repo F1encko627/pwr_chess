@@ -6,22 +6,22 @@ import (
 	"io"
 	"net/http"
 	"strconv"
-	"ust_chess/board"
-	"ust_chess/types"
+	"ust_chess/internal/board"
+	"ust_chess/internal/types"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
 var (
-	game = board.NewGame()
+	game = board.NewGame([]types.Piece{})
 )
 
 type Template struct {
-    templates *template.Template
+	templates *template.Template
 }
 
-func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+func (t *Template) Render(w io.Writer, name string, data any, c echo.Context) error {
 	return t.templates.ExecuteTemplate(w, name, data)
 }
 
@@ -34,7 +34,7 @@ func NewTemplate() *Template {
 			"string": func(x types.Type) string {
 				return string(x)
 			},
-			"state" : func(m types.State) string {
+			"state": func(m types.State) string {
 				switch m {
 				case types.WHITE_TURN:
 					return "Ходят белые"
@@ -54,7 +54,7 @@ func NewTemplate() *Template {
 					return "Unknown state"
 				}
 			},
-		}).ParseGlob("web/*.templ")),
+		}).ParseGlob("./web/*.templ")),
 	}
 }
 
@@ -87,8 +87,23 @@ func Move(c echo.Context) error {
 	return c.Render(http.StatusOK, "board.html.templ", game)
 }
 
+var test_case = []types.Piece{
+	types.GP(types.PAWN, false, types.NewPos(3, 1)),
+	types.GP(types.PAWN, false, types.NewPos(1, 2)),
+	types.GP(types.PAWN, false, types.NewPos(5, 2)),
+	types.GP(types.PAWN, false, types.NewPos(5, 4)),
+	types.GP(types.PAWN, false, types.NewPos(5, 6)),
+	types.GP(types.PAWN, false, types.NewPos(3, 6)),
+	types.GP(types.PAWN, false, types.NewPos(0, 4)),
+	types.GP(types.PAWN, false, types.NewPos(1, 6)),
+	//types.GP(types.PAWN, false, types.NewPos(4, 2)),
+	//types.GP(types.PAWN, false, types.NewPos(5, 3)),
+
+	types.GP(types.QUEEN, true, types.NewPos(3, 4)),
+}
+
 func Restart(c echo.Context) error {
-	game = board.NewGame()
+	game = board.NewGame(test_case)
 	c.Logger().Warn("game restated")
 
 	return c.Render(http.StatusOK, "board.html.templ", game)

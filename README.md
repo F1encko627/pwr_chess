@@ -12,26 +12,29 @@ Chess game with some additions made to learn golang.
 - [ ] Mathematical notation to make moves.
 - [ ] Move validation.
   - [ ] Pawn.
-    - [ ] General.
-    - [ ] en passant.
+    - [ ] General movement.
+    - [ ] Taking pieces.
+    - [ ] En passant.
     - [ ] Transformation.
   - [ ] King.
-    - [ ] General.
+    - [x] General.
     - [ ] No move to checked field.
     - [ ] Check.
-    - [ ] Checkmate.
+    - [ ] Checkmate (REALLY HARD).
     - [ ] Castle.
-  - [ ] Queen.
-  - [ ] Rook.
-  - [ ] Bishop.
+  - [x] Queen.
+  - [x] Rook.
+  - [x] Bishop.
   - [x] Knight.
 - [ ] Piece kill count.
-- [ ] Rule sets.
+- [ ] Game modes.
   - [ ] Classic.
   - [ ] Score-based (kill count).
   - [ ] Instagib (check == checkmate)
+  - [ ] Blitz (timer)
 - [ ] Game replay.
 - [ ] Undo tree.
+- [ ] Better interface.
 
 # How to install
 
@@ -40,3 +43,16 @@ git clone https://github.com/F1encko627/pwr_chess.git
 cd pwr_chess
 go run main.go
 ```
+
+# TODO INSITES
+
+- For game modes... store pointer of MovePiece() function or separate move validation functions.
+- For undo tree store diff (just write down consequenses of current move).
+- Make pawn transformation move separate action, so that you can't just move piece without transforming it.
+- Extract move validation into separate functions.
+- Store pieces of each side in separate maps.
+- Store pawns ability to en passant for every board, clear after move.
+- After check, check for mate:
+  1. king can't move over in any way (move or take any piece);
+  2. any piece cant take (check every piece abilty to move from current position to piece giving check, using already written move validation functions);
+  3. any piece can't shield (HARDEST);

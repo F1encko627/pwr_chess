@@ -53,12 +53,12 @@
     <button id="restart">Restart</button>
     <h1>{{state .State}}</h1>
     <div>
-        {{range $keyX, $valueX := .Board}}
+        {{range $keyY, $valueY := .Board}}
         <row>
-            {{ range $keyY, $valueY := $valueX }}
+            {{ range $keyX, $valueX := $valueY }}
             <button x="{{ $keyX }}" y="{{ $keyY }}"
-                class="cell{{if even $keyX $keyY }} white_cell{{else}} black_cell{{end}}{{if $valueY.White }} white_piece{{else}} black_piece{{end}}">{{
-                string $valueY.T }}</button>
+                class="cell{{if even $keyX $keyY }} white_cell{{else}} black_cell{{end}}{{if $valueX.White }} white_piece{{else}} black_piece{{end}}">{{
+                string $valueX.T }}</button>
             {{ end }}
         </row>
         {{ end }}
