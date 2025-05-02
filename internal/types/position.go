@@ -1,9 +1,14 @@
 package types
 
+// For Cartesian coordinates... skill issue
 type Pos int8
 
 func NewPos(x, y int) Pos {
-	return Pos(y*8 + x)
+	if x > -1 && y > -1 && x < 8 && y < 8 {
+		return Pos(y*8 + x)
+	} else {
+		return Pos(-1)
+	}
 }
 
 func (p Pos) IsValid() bool {

@@ -44,13 +44,11 @@ cd pwr_chess
 go run main.go
 ```
 
-# TODO INSITES
+# TODO INSIGHTES
 
 - For game modes... store pointer of MovePiece() function or separate move validation functions.
 - For undo tree store diff (just write down consequenses of current move).
-- Make pawn transformation move separate action, so that you can't just move piece without transforming it.
-- Extract move validation into separate functions.
-- Store pieces of each side in separate maps.
+- Add new optional parameter for moving piece to transform pawn. Ignored pawn not on the last row.
 - Store pawns ability to en passant for every board, clear after move.
 - After check, check for mate:
   1. king can't move over in any way (move or take any piece);

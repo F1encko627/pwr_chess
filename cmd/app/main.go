@@ -34,26 +34,6 @@ func NewTemplate() *Template {
 			"string": func(x types.Type) string {
 				return string(x)
 			},
-			"state": func(m types.State) string {
-				switch m {
-				case types.WHITE_TURN:
-					return "Ходят белые"
-				case types.BLACK_TURN:
-					return "Ходят черные"
-				case types.WHITE_CHECK:
-					return "Шах белому королю"
-				case types.BLACK_CHECK:
-					return "Шах черному королю"
-				case types.WHITE_CHECKMATE:
-					return "Мат белому королю"
-				case types.BLACK_CHECKMATE:
-					return "Мат черному королю"
-				case types.STALEMATE:
-					return "Пат"
-				default:
-					return "Unknown state"
-				}
-			},
 		}).ParseGlob("./web/*.templ")),
 	}
 }
@@ -87,23 +67,31 @@ func Move(c echo.Context) error {
 	return c.Render(http.StatusOK, "board.html.templ", game)
 }
 
-var test_case = []types.Piece{
-	types.GP(types.PAWN, false, types.NewPos(3, 1)),
-	types.GP(types.PAWN, false, types.NewPos(1, 2)),
-	types.GP(types.PAWN, false, types.NewPos(5, 2)),
-	types.GP(types.PAWN, false, types.NewPos(5, 4)),
-	types.GP(types.PAWN, false, types.NewPos(5, 6)),
-	types.GP(types.PAWN, false, types.NewPos(3, 6)),
-	types.GP(types.PAWN, false, types.NewPos(0, 4)),
-	types.GP(types.PAWN, false, types.NewPos(1, 6)),
-	//types.GP(types.PAWN, false, types.NewPos(4, 2)),
-	//types.GP(types.PAWN, false, types.NewPos(5, 3)),
+// var test_case = []types.Piece{
+// 	types.GP(types.QUEEN, false, types.NewPos(3, 1)),
+// 	types.GP(types.QUEEN, false, types.NewPos(1, 2)),
+// 	types.GP(types.QUEEN, false, types.NewPos(5, 2)),
+// 	types.GP(types.QUEEN, false, types.NewPos(5, 4)),
+// 	types.GP(types.QUEEN, false, types.NewPos(5, 6)),
+// 	types.GP(types.QUEEN, false, types.NewPos(3, 6)),
+// 	types.GP(types.QUEEN, false, types.NewPos(0, 4)),
+// 	types.GP(types.QUEEN, false, types.NewPos(1, 6)),
+// 	//types.GP(types.PAWN, false, types.NewPos(4, 2)),
+// 	//types.GP(types.PAWN, false, types.NewPos(5, 3)),
 
-	types.GP(types.QUEEN, true, types.NewPos(3, 4)),
-}
+// 	types.GP(types.KING, true, types.NewPos(3, 4)),
+// }
 
 func Restart(c echo.Context) error {
-	game = board.NewGame(test_case)
+	game = board.NewGame([]types.Piece{
+		types.GP(types.KING, false, types.NewPos(0, 0)),
+
+		types.GP(types.QUEEN, true, types.NewPos(2, 6)),
+		types.GP(types.ROOK, true, types.NewPos(3, 6)),
+		types.GP(types.BISHOP, true, types.NewPos(4, 6)),
+		types.GP(types.PAWN, true, types.NewPos(1, 2)),
+		types.GP(types.KNIGHT, true, types.NewPos(4, 2)),
+	})
 	c.Logger().Warn("game restated")
 
 	return c.Render(http.StatusOK, "board.html.templ", game)

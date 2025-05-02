@@ -22,6 +22,7 @@ type Piece struct {
 
 var seq = int8(-1)
 
+// "NewPiece" or "GetPiece" piece with correct ID and other fields
 func GP(T Type, White bool, pos Pos) Piece {
 	if T == EMPTY {
 		return Piece{
