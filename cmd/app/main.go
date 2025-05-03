@@ -5,12 +5,16 @@ import (
 	"html/template"
 	"io"
 	"net/http"
+	"os"
 	"strconv"
+	"time"
 	"ust_chess/internal/board"
 	"ust_chess/internal/types"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -31,14 +35,22 @@ func NewTemplate() *Template {
 			"even": func(x, y int) bool {
 				return (x+y)%2 == 0
 			},
-			"string": func(x types.Type) string {
-				return string(x)
+			"string": func(x fmt.Stringer) string {
+				return x.String()
 			},
 		}).ParseGlob("./web/*.templ")),
 	}
 }
 
+// TODO:
+// Вынести логику серера в отдельный пакет
+// Мультипреер по комнатам. Луше сразу по комнатам. Не уверен что получится промежуточно сделать просто два игрока.
+// Может быть по приколу отказаться от Echo и сделать самописный сервер на базовом http/net. Вроде неплохое обучение.
+// Потом может быть систему аккаунтов примитивную. Авторизацию через битрикс лол.
 func main() {
+
+	log.Logger = zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.DateTime}).With().Timestamp().Logger()
+
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Renderer = NewTemplate()

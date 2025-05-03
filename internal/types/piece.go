@@ -1,5 +1,7 @@
 package types
 
+import "fmt"
+
 type Type rune
 
 const (
@@ -21,6 +23,14 @@ type Piece struct {
 }
 
 var seq = int8(-1)
+
+func (t *Type) String() string {
+	return string(*t)
+}
+
+func (p *Piece) String() string {
+	return fmt.Sprint(p.T.String(), p.White, p.Pos.String(), p.Score, p.ID)
+}
 
 // "NewPiece" or "GetPiece" piece with correct ID and other fields
 func GP(T Type, White bool, pos Pos) Piece {

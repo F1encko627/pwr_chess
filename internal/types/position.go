@@ -1,5 +1,7 @@
 package types
 
+import "fmt"
+
 // For Cartesian coordinates... skill issue
 type Pos int8
 
@@ -8,6 +10,14 @@ func NewPos(x, y int) Pos {
 		return Pos(y*8 + x)
 	} else {
 		return Pos(-1)
+	}
+}
+
+func (p Pos) String() string {
+	if p.IsValid() {
+		return fmt.Sprintf("[%d;%d]", p.GetX(), p.GetY())
+	} else {
+		return "NaN"
 	}
 }
 

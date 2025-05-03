@@ -51,13 +51,16 @@
 <body>
     <h1>Let's play some chess!</h1>
     <button id="restart">Restart</button>
-    <h1>{{ if .BlackTurn }}Ходят черные.{{ else }}Ходят белые.{{ end }}{{ if .KingChecked }} Шах{{ if .Checkmate }} и мат!{{ else }}!{{ end }}{{ end }}</h1>
+    <h1>{{ if .IsBlackTurn }}Ходят черные.{{ else }}Ходят белые.{{ end }}{{ if .IsKingChecked }} Шах{{ if .IsCheckmate }} и мат!{{ else }}!{{ end }}{{ end }}</h1>
     <div>
         {{range $keyY, $valueY := .Board}}
         <row>
             {{ range $keyX, $valueX := $valueY }}
             <button x="{{ $keyX }}" y="{{ $keyY }}"
-                class="cell{{if even $keyX $keyY }} white_cell{{else}} black_cell{{end}}{{if $valueX.White }} white_piece{{else}} black_piece{{end}}">{{
+                class="cell{{if even $keyX $keyY }} black_cell{{else}} white_cell{{end}}{{if $valueX.White }} white_piece{{else}} black_piece{{end}}"
+                title="Type:{{string $valueX.T}}
+isWhite: {{$valueX.White}}
+Pos: {{string $valueX.Pos}}">{{
                 string $valueX.T }}</button>
             {{ end }}
         </row>

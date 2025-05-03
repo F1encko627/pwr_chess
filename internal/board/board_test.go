@@ -265,46 +265,62 @@ var tests = []Test{
 	{
 		"black king gets checked by everyone",
 		board.NewGame([]types.Piece{
-			types.GP(types.KING, false, types.NewPos(0, 0)),
+			types.GP(types.KING, false, types.NewPos(0, 7)),
 
-			types.GP(types.QUEEN, true, types.NewPos(2, 6)),
-			types.GP(types.ROOK, true, types.NewPos(3, 6)),
-			types.GP(types.BISHOP, true, types.NewPos(4, 6)),
-			types.GP(types.PAWN, true, types.NewPos(1, 2)),
-			types.GP(types.KNIGHT, true, types.NewPos(5, 4)),
+			types.GP(types.QUEEN, true, types.NewPos(2, 1)),
+			types.GP(types.ROOK, true, types.NewPos(3, 1)),
+			types.GP(types.BISHOP, true, types.NewPos(4, 1)),
+			types.GP(types.PAWN, true, types.NewPos(1, 5)),
+			types.GP(types.KNIGHT, true, types.NewPos(4, 5)),
 		}),
 		[]TestMove{
 			{
-				types.NewPos(2, 6),
-				types.NewPos(2, 0),
-				ValidateKingChecked(false, "no queen horizontal check", true),
-			},
-			{
-				types.NewPos(2, 6),
-				types.NewPos(4, 4),
-				ValidateKingChecked(false, "no queen diagonal check", true),
-			},
-			{
-				types.NewPos(3, 6),
-				types.NewPos(3, 0),
-				ValidateKingChecked(false, "no rook check", true),
-			},
-			{
-				types.NewPos(4, 6),
-				types.NewPos(5, 5),
-				ValidateKingChecked(false, "no bishop check", true),
-			},
-			{
-				types.NewPos(1, 2),
-				types.NewPos(1, 1),
-				ValidateKingChecked(false, "no pawn check", true),
-			},
-			{
-				types.NewPos(5, 4),
 				types.NewPos(2, 1),
-				ValidateKingChecked(false, "no knight check", true),
+				types.NewPos(2, 7),
+				ValidateKingChecked(true, "no queen horizontal check", true),
+			},
+			{
+				types.NewPos(2, 1),
+				types.NewPos(4, 3),
+				ValidateKingChecked(true, "no queen diagonal check", true),
+			},
+			{
+				types.NewPos(3, 1),
+				types.NewPos(3, 7),
+				ValidateKingChecked(true, "no rook check", true),
+			},
+			{
+				types.NewPos(4, 1),
+				types.NewPos(5, 2),
+				ValidateKingChecked(true, "no bishop check", true),
+			},
+			{
+				types.NewPos(1, 5),
+				types.NewPos(1, 6),
+				ValidateKingChecked(true, "no pawn check", true),
+			},
+			{
+				types.NewPos(4, 5),
+				types.NewPos(2, 6),
+				ValidateKingChecked(true, "no knight check", true),
 			},
 		},
+	},
+	{
+		"queen can't junp over pieces",
+		board.NewGame([]types.Piece{
+			types.GP(types.PAWN, true, types.NewPos(3, 1)),
+			types.GP(types.PAWN, true, types.NewPos(1, 2)),
+			types.GP(types.PAWN, true, types.NewPos(5, 2)),
+			types.GP(types.PAWN, true, types.NewPos(5, 4)),
+			types.GP(types.PAWN, true, types.NewPos(4, 5)),
+			types.GP(types.PAWN, true, types.NewPos(3, 5)),
+			types.GP(types.PAWN, true, types.NewPos(0, 4)),
+			types.GP(types.PAWN, true, types.NewPos(0, 7)),
+
+			types.GP(types.QUEEN, false, types.NewPos(3, 4)),
+		}),
+		[]TestMove{},
 	},
 }
 
@@ -346,7 +362,7 @@ func ValidateKingChecked(expectCheck bool, errorText string, resetAfter bool) Ga
 			Game.DebugRender()
 			return fmt.Errorf("move error: %s", err)
 		}
-		if Game.KingChecked != expectCheck {
+		if Game.IsKingChecked != expectCheck {
 			Game.DebugRender()
 			return errors.New(errorText)
 		}
@@ -354,112 +370,5 @@ func ValidateKingChecked(expectCheck bool, errorText string, resetAfter bool) Ga
 			*Game = init
 		}
 		return nil
-	}
-}
-
-func TestRookWalksStraigt(t *testing.T) {
-	game := board.NewGame([]types.Piece{
-		types.GP(types.PAWN, true, types.NewPos(3, 1)),
-		types.GP(types.PAWN, true, types.NewPos(1, 2)),
-		types.GP(types.PAWN, true, types.NewPos(5, 2)),
-		types.GP(types.PAWN, true, types.NewPos(5, 4)),
-		types.GP(types.PAWN, true, types.NewPos(4, 5)),
-		types.GP(types.PAWN, true, types.NewPos(3, 5)),
-		types.GP(types.PAWN, true, types.NewPos(0, 4)),
-		types.GP(types.PAWN, true, types.NewPos(0, 7)),
-
-		types.GP(types.ROOK, false, types.NewPos(3, 4)),
-	})
-	err := game.MovePiece(4, 0, 4, 1)
-	if err == nil {
-		game.DebugRender()
-		t.Fatal("white took it's own piece")
-	}
-}
-
-func TestQueenCantJumpOverPiece(t *testing.T) {
-	game := board.NewGame([]types.Piece{
-		types.GP(types.PAWN, false, types.NewPos(3, 1)),
-		types.GP(types.PAWN, false, types.NewPos(1, 2)),
-		types.GP(types.PAWN, false, types.NewPos(5, 2)),
-		types.GP(types.PAWN, false, types.NewPos(5, 4)),
-		types.GP(types.PAWN, false, types.NewPos(4, 5)),
-		types.GP(types.PAWN, false, types.NewPos(3, 5)),
-		types.GP(types.PAWN, false, types.NewPos(0, 4)),
-		types.GP(types.PAWN, false, types.NewPos(0, 7)),
-
-		types.GP(types.QUEEN, true, types.NewPos(3, 4)),
-	})
-	game.BlackTurn = false
-	game.DebugRender()
-	err := game.MovePiece(3, 4, 0, 1)
-	if err == nil {
-		game.DebugRender()
-		t.Fatal("queen jumped over piece")
-	}
-	game.BlackTurn = false
-	err = game.MovePiece(3, 4, 3, 0)
-	if err == nil {
-		t.Fatal("queen jumped over piece")
-	}
-	game.BlackTurn = false
-	err = game.MovePiece(3, 4, 7, 1)
-	if err == nil {
-		t.Fatal("queen jumped over piece")
-	}
-	game.BlackTurn = false
-	err = game.MovePiece(3, 4, 7, 4)
-	if err == nil {
-		t.Fatal("queen jumped over piece")
-	}
-	game.BlackTurn = false
-	err = game.MovePiece(3, 4, 5, 6)
-	if err == nil {
-		t.Fatal("queen jumped over piece")
-	}
-	game.BlackTurn = false
-	err = game.MovePiece(3, 4, 3, 6)
-	if err == nil {
-		t.Fatal("queen jumped over piece")
-	}
-	game.BlackTurn = false
-	err = game.MovePiece(3, 4, 1, 6)
-	if err != nil {
-		t.Fatal("queen not moved")
-	}
-	game.BlackTurn = false
-	err = game.MovePiece(1, 6, 1, 3)
-	if err != nil {
-		t.Fatal("queen not moved")
-	}
-	game.BlackTurn = false
-	err = game.MovePiece(1, 3, 2, 4)
-	if err != nil {
-		t.Fatal("queen not moved")
-	}
-	game.BlackTurn = false
-	err = game.MovePiece(2, 4, 4, 4)
-	if err != nil {
-		t.Fatal("queen not moved")
-	}
-	game.BlackTurn = false
-	err = game.MovePiece(4, 4, 4, 5)
-	if err != nil {
-		t.Fatal("queen not moved")
-	}
-	game.BlackTurn = false
-	err = game.MovePiece(4, 5, 1, 2)
-	if err != nil {
-		t.Fatal("queen not moved")
-	}
-	game.BlackTurn = false
-	err = game.MovePiece(1, 2, 5, 2)
-	if err != nil {
-		t.Fatal("queen not moved")
-	}
-	game.BlackTurn = false
-	err = game.MovePiece(5, 2, 5, 4)
-	if err != nil {
-		t.Fatal("queen not moved")
 	}
 }

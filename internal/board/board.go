@@ -6,19 +6,23 @@ import (
 	"math"
 	"time"
 	"ust_chess/internal/types"
+
+	"github.com/rs/zerolog/log"
 )
 
 type Game struct {
-	Board         [8][8]*types.Piece
-	WhitePieces   map[types.Type][]types.Piece
-	BlackPieces   map[types.Type][]types.Piece // plus empty tile
-	BlackTurn     bool
-	KingChecked   bool
-	Checkmate     bool
-	Pause         bool
-	EnPassantPawn *types.Piece
-	LastMoveTime  time.Time
-	MoveFunc      *func(Game) (int, int, int, int)
+	Board            [8][8]*types.Piece
+	WhitePieces      map[types.Type][]types.Piece
+	BlackPieces      map[types.Type][]types.Piece // plus empty tile
+	IsBlackTurn      bool
+	IsWhiteCanCastle bool
+	IsBlackCanCastle bool
+	IsKingChecked    bool
+	IsCheckmate      bool
+	IsPause          bool
+	EnPassantPawn    *types.Piece
+	LastMoveTime     time.Time
+	MoveFunc         *func(Game) (int, int, int, int)
 }
 
 var classic = []types.Piece{
@@ -69,23 +73,26 @@ func NewGame(start []types.Piece) Game {
 	g.WhitePieces = make(map[types.Type][]types.Piece)
 	g.BlackPieces = make(map[types.Type][]types.Piece)
 
-	empty := types.GP(types.EMPTY, false, types.Pos(0))
+	empty := types.GP(types.EMPTY, false, types.Pos(-1))
 
 	g.BlackPieces[types.EMPTY] = append(g.BlackPieces[types.EMPTY], empty)
 
 	for _, p := range start {
 		if p.White {
 			g.WhitePieces[p.T] = append(g.WhitePieces[p.T], p)
+			g.Board[p.Pos.GetY()][p.Pos.GetX()] = &g.WhitePieces[p.T][len(g.WhitePieces[p.T])-1]
 		} else {
 			g.BlackPieces[p.T] = append(g.BlackPieces[p.T], p)
+			g.Board[p.Pos.GetY()][p.Pos.GetX()] = &g.BlackPieces[p.T][len(g.BlackPieces[p.T])-1]
 		}
-		g.Board[p.Pos.GetY()][p.Pos.GetX()] = &p
 	}
 
 	for i := range 8 {
 		for j := range 8 {
 			if g.Board[i][j] == nil {
 				g.Board[i][j] = &g.BlackPieces[types.EMPTY][0]
+			} else {
+				g.Board[i][j].Pos = types.NewPos(j, i)
 			}
 		}
 	}
@@ -94,59 +101,89 @@ func NewGame(start []types.Piece) Game {
 }
 
 func (g Game) SetTurnSide(whiteTurn bool) Game {
-	g.BlackTurn = !whiteTurn
+	g.IsBlackTurn = !whiteTurn
 	return g
 }
 
 func (g *Game) DebugRender() {
 	for y := range 8 {
+		fmt.Print(7-y, 8-y, " ")
 		for x := range 8 {
-			piece := g.Board[y][x]
+			piece := g.Board[7-y][x]
+			if piece.T == types.EMPTY {
+				if (x+y)%2 != 0 {
+					fmt.Print("  ")
+				} else {
+					fmt.Print("██")
+				}
+				continue
+			}
 			w := "B"
 			if piece.White {
 				w = "W"
 			}
-			fmt.Printf("| y:%d x:%d %s%s ", y, x, w, string(piece.T))
+			fmt.Printf("%s%s", w, piece.T.String())
 		}
-		fmt.Print("|\n")
+		fmt.Print("\n")
+	}
+	fmt.Print("    ")
+	for i := range 8 {
+		fmt.Print(string(rune('a'+i)), " ")
+	}
+	fmt.Print("\n")
+	fmt.Print("    ")
+	for i := range 8 {
+		fmt.Print(i, " ")
+	}
+	fmt.Print("\n White: ")
+	for _, a := range g.WhitePieces {
+		for _, p := range a {
+			fmt.Print(p.String())
+		}
+	}
+	fmt.Print("\n Black: ")
+	for _, a := range g.BlackPieces {
+		for _, p := range a {
+			fmt.Print(p.String())
+		}
 	}
 }
 
 /*
 TODO:
-- Математическая нотация
-- Проверить не быстрее ли использовать одномерный массив вместо двумерного
-
-- Проверка на валидность хода для каждой фигуры
+- Конвертация из математической нотации
+- Проверить быстрее ли / проще ли проверки в одномерном массиве. Перейти полностью на types.Pos вместо ix iy fx fy
+- Взятие на проходе
+- Рокировка (просто двигать короля к финальному положению по клетке за раз, и проверять не находится ли он под шахом)
+- Проверка на мат
+ 1. Король не может уйти с битого поля (+ взятие ближайшей фигуры соперника + проверка на шах после взятия)
+ 2. Нападающая фигура не может быть взята любым ходом (взять готовую логику валидности хода. ВЗЯТИЕ ФИГУРЫ НЕ ГАРАНТИРУЕТ ОТСУТСТВИЕ ШАХА НА СЛЕДУЮЩЕМ ХОДЕ)
+ 3. ЛИНЯЯ ШАХА НЕ МОЖЕТ БЫТЬ ПЕРЕКРЫТА ХОДОМ ЛЮБОЙ ФИГУРЫ (НЕ РАБОТАЕТ ДЛЯ КОНЯ И ЕСЛИ ФИГУРА ВПРИТЫК. ПЕРЕКРЫТИЕ ЛИНИИ ШАХА НЕ ГАРАНТИРУЕТ ОТСУТСТВИЕ ШАХА НА СЛЕДУЮЩЕМ ХОДЕ)
 */
 func (g *Game) MovePiece(ix int, iy int, fx int, fy int) error {
 	// Pause
-	if g.Pause {
+	if g.IsPause {
 		return errors.New("game paused: can't make moves")
 	}
 	// Game over
-	if g.Checkmate {
+	if g.IsCheckmate {
 		return errors.New("game over: can't make moves")
-	}
-	// Outside of the board
-	if ix < 0 || ix > 8 || iy < 0 || iy > 8 {
-		return fmt.Errorf("out of bounds position [%d;%d]", ix, iy)
-	} else if fx < 0 || fx > 8 || fy < 0 || fy > 8 {
-		return fmt.Errorf("out of bounds move [%d;%d]", fx, fy)
 	}
 	// Same cell move
 	if ix == fx && iy == fy {
 		return fmt.Errorf("same cell move (no move) [%d;%d]", ix, iy)
 	}
-	// Moving nothing
-	if g.Board[iy][ix].T == types.EMPTY {
-		return fmt.Errorf("no piece to move [%d;%d]", ix, iy)
+	// Outside of the board
+	if !types.NewPos(ix, iy).IsValid() {
+		return fmt.Errorf("out of bounds position [%d;%d]", ix, iy)
+	} else if !types.NewPos(fx, fy).IsValid() {
+		return fmt.Errorf("out of bounds move [%d;%d]", fx, fy)
 	}
 	// Wrong color move
-	if g.BlackTurn == g.Board[iy][ix].White {
+	if g.IsBlackTurn == g.Board[iy][ix].White {
 		return fmt.Errorf("wrong color move [%d;%d]", ix, iy)
 	}
-	// Trying take same color piece
+	// Trying to take same color piece
 	if g.Board[fy][fx].T != ' ' &&
 		(g.Board[fy][fx].White == g.Board[iy][ix].White) {
 		return fmt.Errorf("can't beat same color [%d;%d] -> [%d;%d]", ix, iy, fx, fy)
@@ -177,7 +214,16 @@ func (g *Game) MovePiece(ix int, iy int, fx int, fy int) error {
 		if err := g.CheckValidPawnMove(ix, iy, fx, fy); err != nil {
 			return err
 		}
+	default:
+		return fmt.Errorf("no piece to move [%d;%d]", ix, iy)
 	}
+
+	game_save := *g
+
+	// General move execution
+	g.Board[fy][fx] = g.Board[iy][ix]
+	g.Board[iy][ix] = &g.BlackPieces[types.EMPTY][0]
+	g.Board[fy][fx].Pos = types.NewPos(fx, fy)
 
 	var ownKingPos, enemyKingPos = types.Pos(-1), types.Pos(-1)
 	if _, ok := g.WhitePieces[types.KING]; ok {
@@ -186,55 +232,52 @@ func (g *Game) MovePiece(ix int, iy int, fx int, fy int) error {
 	if _, ok := g.BlackPieces[types.KING]; ok {
 		enemyKingPos = g.BlackPieces[types.KING][0].Pos
 	}
-	if g.BlackTurn {
+	if g.IsBlackTurn {
 		ownKingPos, enemyKingPos = enemyKingPos, ownKingPos
 	}
 
-	game_save := *g
-	g.KingChecked = false
-
-	// General move execution
-	g.Board[fy][fx] = g.Board[iy][ix]
-	g.Board[iy][ix] = &g.BlackPieces[types.EMPTY][0]
-
-	if ownKingPos.IsValid() && g.IsKingChecked(ownKingPos.GetX(), ownKingPos.GetY(), !g.BlackTurn) {
+	if ownKingPos.IsValid() && g.CheckKingChecked(ownKingPos.GetX(), ownKingPos.GetY(), !g.IsBlackTurn) {
 		// Revert illigal move
 		*g = game_save
 		return fmt.Errorf("invalid turn: own king still checked")
 	}
 
-	// enemy king status
 	if enemyKingPos.IsValid() {
-		g.KingChecked = g.IsKingChecked(enemyKingPos.GetX(), enemyKingPos.GetY(), g.BlackTurn)
-		if g.KingChecked {
-			// check for checkmate
+		g.IsKingChecked = g.CheckKingChecked(enemyKingPos.GetX(), enemyKingPos.GetY(), g.IsBlackTurn)
+		if g.IsKingChecked {
+			// TODO: check for checkmate
 		}
+	} else {
+		g.IsKingChecked = false
 	}
 
 	// Other color turn
-	g.BlackTurn = !g.BlackTurn
+	g.IsBlackTurn = !g.IsBlackTurn
 
 	return nil
 }
 
-func (g *Game) IsKingChecked(x, y int, kingIsWhite bool) (is_check bool) {
+func (g *Game) CheckKingChecked(x, y int, kingIsWhite bool) bool {
+	log.Trace().Str("pos", types.NewPos(x, y).String()).Bool("kingIsWhite", kingIsWhite).Msg("CheckKingChecked")
 	// up
 	for i := y + 1; i < 8; i++ {
 		if g.Board[i][x].White != kingIsWhite &&
 			(g.Board[i][x].T == types.ROOK ||
 				g.Board[i][x].T == types.QUEEN) {
+			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[i][x].String()).Msg("king attacked")
 			return true
-		} else if g.Board[y][i].T != types.EMPTY {
+		} else if g.Board[i][x].T != types.EMPTY {
 			break
 		}
 	}
 	// down
-	for i := y - 1; i > 8; i-- {
+	for i := y - 1; i > -1; i-- {
 		if g.Board[i][x].White != kingIsWhite &&
 			(g.Board[i][x].T == types.ROOK ||
 				g.Board[i][x].T == types.QUEEN) {
+			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[i][x].String()).Msg("king attacked")
 			return true
-		} else if g.Board[y][i].T != types.EMPTY {
+		} else if g.Board[i][x].T != types.EMPTY {
 			break
 		}
 	}
@@ -243,28 +286,32 @@ func (g *Game) IsKingChecked(x, y int, kingIsWhite bool) (is_check bool) {
 		if g.Board[y][i].White != kingIsWhite &&
 			(g.Board[y][i].T == types.ROOK ||
 				g.Board[y][i].T == types.QUEEN) {
+			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[y][i].String()).Msg("king attacked")
 			return true
 		} else if g.Board[y][i].T != types.EMPTY {
 			break
 		}
 	}
 	// right
-	for i := x - 1; i > 8; i-- {
+	for i := x - 1; i > -1; i-- {
 		if g.Board[y][i].White != kingIsWhite &&
 			(g.Board[y][i].T == types.ROOK ||
 				g.Board[y][i].T == types.QUEEN) {
+			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[y][i].String()).Msg("king attacked")
 			return true
 		} else if g.Board[y][i].T != types.EMPTY {
 			break
 		}
 	}
 	// up right
-	for i, j := y-1, x+1; i > 0 && j < 8; {
-		if g.Board[y][i].White != kingIsWhite &&
-			(g.Board[y][i].T == types.BISHOP ||
-				g.Board[y][i].T == types.QUEEN) {
+	for i, j := y-1, x+1; i > -1 && j < 8; {
+		if g.Board[i][j].White != kingIsWhite &&
+			(g.Board[i][j].T == types.BISHOP ||
+				g.Board[i][j].T == types.QUEEN ||
+				(g.Board[i][j].T == types.PAWN && g.Board[i][j].White)) {
+			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[i][j].String()).Msg("king attacked")
 			return true
-		} else if g.Board[y][i].T != types.EMPTY {
+		} else if g.Board[i][j].T != types.EMPTY {
 			break
 		}
 		i--
@@ -272,12 +319,14 @@ func (g *Game) IsKingChecked(x, y int, kingIsWhite bool) (is_check bool) {
 	}
 
 	// up left
-	for i, j := y-1, x-1; i > 0 && j > 0; {
-		if g.Board[y][i].White != kingIsWhite &&
-			(g.Board[y][i].T == types.BISHOP ||
-				g.Board[y][i].T == types.QUEEN) {
+	for i, j := y-1, x-1; i > -1 && j > -1; {
+		if g.Board[i][j].White != kingIsWhite &&
+			(g.Board[i][j].T == types.BISHOP ||
+				g.Board[i][j].T == types.QUEEN ||
+				g.Board[i][j].T == types.PAWN && g.Board[i][j].White) {
+			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[i][j].String()).Msg("king attacked")
 			return true
-		} else if g.Board[y][i].T != types.EMPTY {
+		} else if g.Board[i][j].T != types.EMPTY {
 			break
 		}
 		i--
@@ -286,11 +335,13 @@ func (g *Game) IsKingChecked(x, y int, kingIsWhite bool) (is_check bool) {
 
 	// down right
 	for i, j := y+1, x+1; i < 8 && j < 8; {
-		if g.Board[y][i].White != kingIsWhite &&
-			(g.Board[y][i].T == types.BISHOP ||
-				g.Board[y][i].T == types.QUEEN) {
+		if g.Board[i][j].White != kingIsWhite &&
+			(g.Board[i][j].T == types.BISHOP ||
+				g.Board[i][j].T == types.QUEEN ||
+				g.Board[i][j].T == types.PAWN && !g.Board[i][j].White) {
+			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[i][j].String()).Msg("king attacked")
 			return true
-		} else if g.Board[y][i].T != types.EMPTY {
+		} else if g.Board[i][j].T != types.EMPTY {
 			break
 		}
 		i++
@@ -298,12 +349,14 @@ func (g *Game) IsKingChecked(x, y int, kingIsWhite bool) (is_check bool) {
 	}
 
 	// down left
-	for i, j := y+1, x-1; i < 8 && j > 0; {
-		if g.Board[y][i].White != kingIsWhite &&
-			(g.Board[y][i].T == types.BISHOP ||
-				g.Board[y][i].T == types.QUEEN) {
+	for i, j := y+1, x-1; i < 8 && j > -1; {
+		if g.Board[i][j].White != kingIsWhite &&
+			(g.Board[i][j].T == types.BISHOP ||
+				g.Board[i][j].T == types.QUEEN ||
+				g.Board[i][j].T == types.PAWN && !g.Board[i][j].White) {
+			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[i][j].String()).Msg("king attacked")
 			return true
-		} else if g.Board[y][i].T != types.EMPTY {
+		} else if g.Board[i][j].T != types.EMPTY {
 			break
 		}
 		i++
@@ -311,26 +364,31 @@ func (g *Game) IsKingChecked(x, y int, kingIsWhite bool) (is_check bool) {
 	}
 
 	// KNIGHT CHECK
-	k := []types.Pos{
-		types.NewPos(x+3, y+2),
-		types.NewPos(x+2, y+3),
-		types.NewPos(x-3, y-2),
-		types.NewPos(x-2, y-3),
-		types.NewPos(x-3, y+2),
-		types.NewPos(x-2, y+3),
-		types.NewPos(x+3, y-2),
-		types.NewPos(x+2, y-3),
+	possibleKnight := []types.Pos{
+		types.NewPos(x+2, y+1),
+		types.NewPos(x+1, y+2),
+		types.NewPos(x-2, y-1),
+		types.NewPos(x-1, y-2),
+		types.NewPos(x-2, y+1),
+		types.NewPos(x-1, y+2),
+		types.NewPos(x+2, y-1),
+		types.NewPos(x+1, y-2),
 	}
-	for _, p := range k {
+	for _, position := range possibleKnight {
+		if !position.IsValid() {
+			continue
+		}
 		if kingIsWhite {
-			for _, k := range g.BlackPieces[types.KNIGHT] {
-				if k.Pos == p {
+			for _, knight := range g.BlackPieces[types.KNIGHT] {
+				if knight.Pos == position {
+					fmt.Println("isWhiteKing", kingIsWhite, knight.String())
 					return true
 				}
 			}
 		} else {
-			for _, k := range g.WhitePieces[types.KNIGHT] {
-				if k.Pos == p {
+			for _, knight := range g.WhitePieces[types.KNIGHT] {
+				if knight.Pos == position {
+					fmt.Println("isWhiteKing", kingIsWhite, knight.String())
 					return true
 				}
 			}
