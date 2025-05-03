@@ -12,14 +12,14 @@ Chess game with some additions made to learn golang.
 - [ ] Mathematical notation to make moves.
 - [ ] Move validation.
   - [ ] Pawn.
-    - [ ] General movement.
-    - [ ] Taking pieces.
+    - [x] General movement.
+    - [x] Taking pieces.
     - [ ] En passant.
     - [ ] Transformation.
   - [ ] King.
     - [x] General.
-    - [ ] No move to checked field.
-    - [ ] Check.
+    - [x] No move to checked field.
+    - [x] Check.
     - [ ] Checkmate (REALLY HARD).
     - [ ] Castle.
   - [x] Queen.
