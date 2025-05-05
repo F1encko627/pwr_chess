@@ -31,14 +31,30 @@ func (t *Template) Render(w io.Writer, name string, data any, c echo.Context) er
 
 func NewTemplate() *Template {
 	return &Template{
-		templates: template.Must(template.New("board.html.templ").Funcs(template.FuncMap{
+		templates: template.Must(template.New("board.html.tmpl").Funcs(template.FuncMap{
 			"even": func(x, y int) bool {
 				return (x+y)%2 == 0
 			},
 			"string": func(x fmt.Stringer) string {
 				return x.String()
 			},
-		}).ParseGlob("./web/*.templ")),
+			"name": func(x types.Type) string {
+				switch x {
+				case types.KING:
+					return "king"
+				case types.QUEEN:
+					return "queen"
+				case types.KNIGHT:
+					return "knight"
+				case types.ROOK:
+					return "rook"
+				case types.BISHOP:
+					return "bishop"
+				default:
+					return "pawn"
+				}
+			},
+		}).ParseGlob("./web/*.tmpl")),
 	}
 }
 
@@ -61,7 +77,7 @@ func main() {
 }
 
 func Hello(c echo.Context) error {
-	return c.Render(http.StatusOK, "board.html.templ", game)
+	return c.Render(http.StatusOK, "board.html.tmpl", game)
 }
 
 func Move(c echo.Context) error {
@@ -76,7 +92,7 @@ func Move(c echo.Context) error {
 		c.Logger().Error(err)
 	}
 
-	return c.Render(http.StatusOK, "board.html.templ", game)
+	return c.Render(http.StatusOK, "board.html.tmpl", game)
 }
 
 // var test_case = []types.Piece{
@@ -95,16 +111,8 @@ func Move(c echo.Context) error {
 // }
 
 func Restart(c echo.Context) error {
-	game = board.NewGame([]types.Piece{
-		types.GP(types.KING, false, types.NewPos(0, 0)),
-
-		types.GP(types.QUEEN, true, types.NewPos(2, 6)),
-		types.GP(types.ROOK, true, types.NewPos(3, 6)),
-		types.GP(types.BISHOP, true, types.NewPos(4, 6)),
-		types.GP(types.PAWN, true, types.NewPos(1, 2)),
-		types.GP(types.KNIGHT, true, types.NewPos(4, 2)),
-	})
+	game = board.NewGame([]types.Piece{})
 	c.Logger().Warn("game restated")
 
-	return c.Render(http.StatusOK, "board.html.templ", game)
+	return c.Render(http.StatusOK, "board.html.tmpl", game)
 }

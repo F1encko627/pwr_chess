@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="initial-scale=1.0">
+    <title>Chess!</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"
+        integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
+        crossorigin="anonymous"></script>
+</head>
+
+<style>
+    :root {
+        --white-cell: #BF9E75;
+        --black-cell: #59362E;
+        --press-cell: #84B026;
+        --background: #011F26;
+        --text-color: white;
+
+        /* Variables */
+        --button_radius: 0.75em;
+        --button_color: var(--background);
+        --button_outline_color: #ffffff;
+    }
+
+    body {
+        background-color: var(--background);
+        color: var(--text-color);
+        text-align: center;
+    }
+
+    .board {
+        margin: 0 auto;
+        display: inline-block;
+        overflow: hidden;
+        border-style: solid;
+        border-radius: 24px;
+        border-color: black;
+        border-width: 2px;
+    }
+
+    row {
+        display: flex;
+        margin: 0;
+        padding: 0;
+    }
+
+    .black_cell {
+        background-color: var(--black-cell);
+    }
+
+    .white_cell {
+        background-color: var(--white-cell);
+    }
+
+    .pressed {
+        background-color: var(--press-cell);
+    }
+
+    .white_piece {
+        color: white;
+        text-shadow: -0.1rem -0.1rem 0 #000, 0.1rem -0.1rem 0 #000, -0.1rem 0.1rem 0 #000, 0.1rem 0.1rem 0 #000;
+    }
+
+    .black_piece {
+        color: black;
+        text-shadow: -0.05rem -0.05rem 0 #fff, 0.05rem -0.05rem 0 #fff, -0.051rem 0.05rem 0 #fff, 0.05rem 0.05rem 0 #fff;
+    }
+
+    .cell {
+        margin: 0;
+        padding: 0;
+        height: 42px;
+        width: 42px;
+        font-size: xx-large;
+    }
+
+    .button {
+        font-size: 17px;
+        font-weight: bold;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        border-radius: var(--button_radius);
+        background: var(--button_outline_color);
+    }
+
+    .input {
+        font-size: 17px;
+        font-weight: bold;
+        display: block;
+        border: 2px solid var(--button_outline_color);
+        border-radius: var(--button_radius);
+        padding: 0.75em 1.5em;
+        margin: 0;
+        background: var(--button_color);
+        color: var(--button_outline_color);
+
+    }
+
+    .input:focus {
+        outline: none;
+    }
+
+    input::-webkit-input-placeholder {
+        font-size: 17px;
+        font-weight: bold;
+        color: var(--button_outline_color);
+    }
+
+    input:hover::-webkit-input-placeholder {
+        color: #666;
+    }
+
+    input:focus::-webkit-input-placeholder {
+        color: #666;
+    }
+
+    .button_top {
+        display: block;
+        box-sizing: border-box;
+        border: 2px solid var(--button_outline_color);
+        border-radius: var(--button_radius);
+        padding: 0.75em 1.5em;
+        margin: 0;
+        background: var(--button_color);
+        color: var(--button_outline_color);
+        transform: translateY(-0.2em);
+        transition: transform 0.1s ease;
+    }
+
+    .button:hover .button_top {
+        /* Pull the button upwards when hovered */
+        transform: translateY(-0.33em);
+    }
+
+    .button:active .button_top {
+        /* Push the button downwards when pressed */
+        transform: translateY(0);
+    }
+
+    .room {
+        display: flex;
+    }
+
+    .room h1 {
+        padding: 0 1rem;
+        text-align: left;
+    }
+
+    .create {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .create input {
+        display: block;
+        margin: 0 auto;
+    }
+
+    .create button {
+        display: block;
+        margin: 0 auto;
+    }
+</style>
+
+<body>
+    <h1>pwr_Chess</h1>
+
+    <p>Select room or create new one</p>
+    <div>
+        <div class="room">
+            <h1>1.</h1>
+            <div>
+                <p>room ID: wT8yR3</p>
+                <p>game time: 2:31</p>
+            </div>
+            <button id="connect" class="button">
+                <span class="button_top">Connect</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="create">
+        <input class="input" placeholder="enter new room name here" type="text">
+        <button id="create" class="button">
+            <span class="button_top">Create</span>
+        </button>
+    </div>
+
+    <nav>
+        <button id="restart" class="button">
+            <span class="button_top">Rsign</span>
+        </button>
+        <button id="exit" class="button">
+            <span class="button_top">Exit</span>
+        </button>
+    </nav>
+    <p>{{ if .IsBlackTurn }}Ходят черные.{{ else }}Ходят белые.{{ end }}{{ if .IsKingChecked }} Шах{{ if .IsCheckmate
+        }} и мат!{{ else }}!{{ end }}{{ end }}</p>
+    <div class="board">
+        {{range $keyY, $valueY := .Board}}
+        <row>
+            {{ range $keyX, $valueX := $valueY }}
+            <button x="{{ $keyX }}" y="{{ $keyY }}"
+                class="cell{{if even $keyX $keyY }} black_cell{{else}} white_cell{{end}}{{if $valueX.White }} white_piece{{else}} black_piece{{end}}"
+                title="Type:{{string $valueX.T}}
+isWhite: {{$valueX.White}}
+Pos: {{string $valueX.Pos}}">{{
+                string $valueX.T }}</button>
+            {{ end }}
+        </row>
+        {{ end }}
+    </div>
+    <script>
+        var secondMove = false;
+        var ix, iy, fx, fy;
+        var cells = document.getElementsByClassName("cell")
+        for (i = 0; i < cells.length; i++) {
+            cells[i].addEventListener("click", makeMove);
+        }
+        function makeMove(e) {
+            console.log(e)
+            if (e.target.innerText == secondMove) {
+                return
+            }
+            if (e.target.classList.contains("pressed") && secondMove) {
+                e.target.classList.remove("pressed")
+                secondMove = false
+                return
+            } else if (!secondMove) {
+                e.target.classList.add("pressed")
+
+                ix = e.target.attributes.x.value;
+                iy = e.target.attributes.y.value;
+
+                secondMove = true
+                return
+            }
+            fx = e.target.attributes.x.value;
+            fy = e.target.attributes.y.value;
+            open(window.location.origin + `/move?ix=${ix}&iy=${iy}&fx=${fx}&fy=${fy}`, "_self");
+        }
+        document.getElementById("restart").addEventListener("click",
+            function (e) {
+                open(window.location.origin + `/restart`, "_self");
+            }
+        )
+    </script>
+</body>
+
+</html>

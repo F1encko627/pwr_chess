@@ -38,7 +38,7 @@ func GP(T Type, White bool, pos Pos) Piece {
 		return Piece{
 			T:     EMPTY,
 			ID:    -1,
-			Pos:   NewPos(-1, -1),
+			Pos:   Pos(-1),
 			White: false,
 			Score: 0,
 		}

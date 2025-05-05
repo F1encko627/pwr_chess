@@ -14,6 +14,7 @@ type Game struct {
 	Board            [8][8]*types.Piece
 	WhitePieces      map[types.Type][]types.Piece
 	BlackPieces      map[types.Type][]types.Piece // plus empty tile
+	Turn             int
 	IsBlackTurn      bool
 	IsWhiteCanCastle bool
 	IsBlackCanCastle bool
@@ -236,15 +237,17 @@ func (g *Game) MovePiece(ix int, iy int, fx int, fy int) error {
 		ownKingPos, enemyKingPos = enemyKingPos, ownKingPos
 	}
 
-	if ownKingPos.IsValid() && g.CheckKingChecked(ownKingPos.GetX(), ownKingPos.GetY(), !g.IsBlackTurn) {
+	if ownKingPos.IsValid() && g.CheckKingChecked(ownKingPos.GetX(), ownKingPos.GetY(), !g.IsBlackTurn).IsValid() {
 		// Revert illigal move
 		*g = game_save
 		return fmt.Errorf("invalid turn: own king still checked")
 	}
 
 	if enemyKingPos.IsValid() {
-		g.IsKingChecked = g.CheckKingChecked(enemyKingPos.GetX(), enemyKingPos.GetY(), g.IsBlackTurn)
+		CheckPos := g.CheckKingChecked(enemyKingPos.GetX(), enemyKingPos.GetY(), g.IsBlackTurn)
+		g.IsKingChecked = CheckPos.IsValid()
 		if g.IsKingChecked {
+			g.IsCheckmate = g.CheckForCheckMate(g.Board[CheckPos.GetY()][CheckPos.GetX()])
 			// TODO: check for checkmate
 		}
 	} else {
@@ -257,7 +260,24 @@ func (g *Game) MovePiece(ix int, iy int, fx int, fy int) error {
 	return nil
 }
 
-func (g *Game) CheckKingChecked(x, y int, kingIsWhite bool) bool {
+// 1. Король не может отойти в сторону.
+// 2. Король не может взять атакующую фигуру.
+// 3.а. Ни одна другая фигура не может взять атакующую (шах от пешки или коня).
+// 3.б. Ни одна другая фигура не может своим ходом перекрыть линию шаха.
+func (g *Game) CheckForCheckMate(lastCheckedPiece *types.Piece) bool {
+	// TODO: проверить что король не может отойти в сторону.
+	switch lastCheckedPiece.T {
+	case types.PAWN:
+		fallthrough
+	case types.KNIGHT:
+		// TODO: просто проверить что нельзя взять фигуру - это единственный способ.
+	default:
+		// TODO: проверить что нельзя взять фигуру, проверить что нельзя закрыться.
+	}
+	return false
+}
+
+func (g *Game) CheckKingChecked(x, y int, kingIsWhite bool) types.Pos {
 	log.Trace().Str("pos", types.NewPos(x, y).String()).Bool("kingIsWhite", kingIsWhite).Msg("CheckKingChecked")
 	// up
 	for i := y + 1; i < 8; i++ {
@@ -265,7 +285,7 @@ func (g *Game) CheckKingChecked(x, y int, kingIsWhite bool) bool {
 			(g.Board[i][x].T == types.ROOK ||
 				g.Board[i][x].T == types.QUEEN) {
 			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[i][x].String()).Msg("king attacked")
-			return true
+			return types.NewPos(x, i)
 		} else if g.Board[i][x].T != types.EMPTY {
 			break
 		}
@@ -276,7 +296,7 @@ func (g *Game) CheckKingChecked(x, y int, kingIsWhite bool) bool {
 			(g.Board[i][x].T == types.ROOK ||
 				g.Board[i][x].T == types.QUEEN) {
 			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[i][x].String()).Msg("king attacked")
-			return true
+			return types.NewPos(x, i)
 		} else if g.Board[i][x].T != types.EMPTY {
 			break
 		}
@@ -287,7 +307,7 @@ func (g *Game) CheckKingChecked(x, y int, kingIsWhite bool) bool {
 			(g.Board[y][i].T == types.ROOK ||
 				g.Board[y][i].T == types.QUEEN) {
 			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[y][i].String()).Msg("king attacked")
-			return true
+			return types.NewPos(i, y)
 		} else if g.Board[y][i].T != types.EMPTY {
 			break
 		}
@@ -298,7 +318,7 @@ func (g *Game) CheckKingChecked(x, y int, kingIsWhite bool) bool {
 			(g.Board[y][i].T == types.ROOK ||
 				g.Board[y][i].T == types.QUEEN) {
 			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[y][i].String()).Msg("king attacked")
-			return true
+			return types.NewPos(i, y)
 		} else if g.Board[y][i].T != types.EMPTY {
 			break
 		}
@@ -310,7 +330,7 @@ func (g *Game) CheckKingChecked(x, y int, kingIsWhite bool) bool {
 				g.Board[i][j].T == types.QUEEN ||
 				(g.Board[i][j].T == types.PAWN && g.Board[i][j].White)) {
 			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[i][j].String()).Msg("king attacked")
-			return true
+			return types.NewPos(j, i)
 		} else if g.Board[i][j].T != types.EMPTY {
 			break
 		}
@@ -325,7 +345,7 @@ func (g *Game) CheckKingChecked(x, y int, kingIsWhite bool) bool {
 				g.Board[i][j].T == types.QUEEN ||
 				g.Board[i][j].T == types.PAWN && g.Board[i][j].White) {
 			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[i][j].String()).Msg("king attacked")
-			return true
+			return types.NewPos(j, i)
 		} else if g.Board[i][j].T != types.EMPTY {
 			break
 		}
@@ -340,7 +360,7 @@ func (g *Game) CheckKingChecked(x, y int, kingIsWhite bool) bool {
 				g.Board[i][j].T == types.QUEEN ||
 				g.Board[i][j].T == types.PAWN && !g.Board[i][j].White) {
 			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[i][j].String()).Msg("king attacked")
-			return true
+			return types.NewPos(j, i)
 		} else if g.Board[i][j].T != types.EMPTY {
 			break
 		}
@@ -355,7 +375,7 @@ func (g *Game) CheckKingChecked(x, y int, kingIsWhite bool) bool {
 				g.Board[i][j].T == types.QUEEN ||
 				g.Board[i][j].T == types.PAWN && !g.Board[i][j].White) {
 			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[i][j].String()).Msg("king attacked")
-			return true
+			return types.NewPos(j, i)
 		} else if g.Board[i][j].T != types.EMPTY {
 			break
 		}
@@ -381,21 +401,21 @@ func (g *Game) CheckKingChecked(x, y int, kingIsWhite bool) bool {
 		if kingIsWhite {
 			for _, knight := range g.BlackPieces[types.KNIGHT] {
 				if knight.Pos == position {
-					fmt.Println("isWhiteKing", kingIsWhite, knight.String())
-					return true
+					log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", knight.String()).Msg("king attacked")
+					return knight.Pos
 				}
 			}
 		} else {
 			for _, knight := range g.WhitePieces[types.KNIGHT] {
 				if knight.Pos == position {
-					fmt.Println("isWhiteKing", kingIsWhite, knight.String())
-					return true
+					log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", knight.String()).Msg("king attacked")
+					return knight.Pos
 				}
 			}
 		}
 	}
 
-	return false
+	return types.Pos(-1)
 }
 
 func (g *Game) CheckValidRookMove(ix int, iy int, fx int, fy int) error {
