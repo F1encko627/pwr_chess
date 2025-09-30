@@ -3,7 +3,6 @@ package board
 import (
 	"errors"
 	"fmt"
-	"math"
 	"time"
 	"ust_chess/internal/types"
 
@@ -11,19 +10,19 @@ import (
 )
 
 type Game struct {
-	Board            [8][8]*types.Piece
-	WhitePieces      map[types.Type][]types.Piece
-	BlackPieces      map[types.Type][]types.Piece // plus empty tile
-	Turn             int
-	IsBlackTurn      bool
-	IsWhiteCanCastle bool
-	IsBlackCanCastle bool
-	IsKingChecked    bool
-	IsCheckmate      bool
-	IsPause          bool
-	EnPassantPawn    *types.Piece
-	LastMoveTime     time.Time
-	MoveFunc         *func(Game) (int, int, int, int)
+	Board             [8][8]*types.Piece
+	WhitePieces       map[types.Type][]types.Piece
+	BlackPieces       map[types.Type][]types.Piece // plus empty tile
+	LastMovedPiece    *types.Piece
+	TurnNum           int
+	IsBlackTurn       bool
+	IsWhiteCantCastle bool
+	IsBlackCantCastle bool
+	IsKingChecked     bool
+	IsCheckmate       bool
+	IsPause           bool
+	EnPassantPawn     *types.Piece
+	LastMoveTime      time.Time
 }
 
 var classic = []types.Piece{
@@ -150,6 +149,29 @@ func (g *Game) DebugRender() {
 	}
 }
 
+func (g *Game) BasicMoveChecks(ix, iy, fx, fy int) error {
+	// Same cell move
+	if ix == fx && iy == fy {
+		return fmt.Errorf("same cell move (no move) [%d;%d]", ix, iy)
+	}
+	// Outside of the board
+	if !types.NewPos(ix, iy).IsValid() {
+		return fmt.Errorf("out of bounds position [%d;%d]", ix, iy)
+	} else if !types.NewPos(fx, fy).IsValid() {
+		return fmt.Errorf("out of bounds move [%d;%d]", fx, fy)
+	}
+	// Wrong color move
+	if g.IsBlackTurn == g.Board[iy][ix].White {
+		return fmt.Errorf("wrong color move [%d;%d]", ix, iy)
+	}
+	// Trying to take same color piece
+	if g.Board[fy][fx].T != ' ' &&
+		(g.Board[fy][fx].White == g.Board[iy][ix].White) {
+		return fmt.Errorf("can't beat same color [%d;%d] -> [%d;%d]", ix, iy, fx, fy)
+	}
+	return nil
+}
+
 /*
 TODO:
 - Конвертация из математической нотации
@@ -170,24 +192,8 @@ func (g *Game) MovePiece(ix int, iy int, fx int, fy int) error {
 	if g.IsCheckmate {
 		return errors.New("game over: can't make moves")
 	}
-	// Same cell move
-	if ix == fx && iy == fy {
-		return fmt.Errorf("same cell move (no move) [%d;%d]", ix, iy)
-	}
-	// Outside of the board
-	if !types.NewPos(ix, iy).IsValid() {
-		return fmt.Errorf("out of bounds position [%d;%d]", ix, iy)
-	} else if !types.NewPos(fx, fy).IsValid() {
-		return fmt.Errorf("out of bounds move [%d;%d]", fx, fy)
-	}
-	// Wrong color move
-	if g.IsBlackTurn == g.Board[iy][ix].White {
-		return fmt.Errorf("wrong color move [%d;%d]", ix, iy)
-	}
-	// Trying to take same color piece
-	if g.Board[fy][fx].T != ' ' &&
-		(g.Board[fy][fx].White == g.Board[iy][ix].White) {
-		return fmt.Errorf("can't beat same color [%d;%d] -> [%d;%d]", ix, iy, fx, fy)
+	if err := g.BasicMoveChecks(ix, iy, fx, fy); err != nil {
+		return err
 	}
 	// Per piece move validation
 	switch g.Board[iy][ix].T {
@@ -222,9 +228,10 @@ func (g *Game) MovePiece(ix int, iy int, fx int, fy int) error {
 	game_save := *g
 
 	// General move execution
+	g.Board[fy][fx].Pos = types.NewPos(-1, -1)
+	g.Board[iy][ix].Pos = types.NewPos(fx, fy)
 	g.Board[fy][fx] = g.Board[iy][ix]
 	g.Board[iy][ix] = &g.BlackPieces[types.EMPTY][0]
-	g.Board[fy][fx].Pos = types.NewPos(fx, fy)
 
 	var ownKingPos, enemyKingPos = types.Pos(-1), types.Pos(-1)
 	if _, ok := g.WhitePieces[types.KING]; ok {
@@ -256,6 +263,7 @@ func (g *Game) MovePiece(ix int, iy int, fx int, fy int) error {
 
 	// Other color turn
 	g.IsBlackTurn = !g.IsBlackTurn
+	g.TurnNum++
 
 	return nil
 }
@@ -264,8 +272,14 @@ func (g *Game) MovePiece(ix int, iy int, fx int, fy int) error {
 // 2. Король не может взять атакующую фигуру.
 // 3.а. Ни одна другая фигура не может взять атакующую (шах от пешки или коня).
 // 3.б. Ни одна другая фигура не может своим ходом перекрыть линию шаха.
+// Проверить на возможность отойти, если нельзя - дальше
+// Собрать список атакующих фигур
+// Если фигур больше двух - мат.
+// Если фигуру нельзя забрать - дальше.
+// Если фигура конь - мат.
+// Проверить что линию атаки нельзя перекрыть
 func (g *Game) CheckForCheckMate(lastCheckedPiece *types.Piece) bool {
-	// TODO: проверить что король не может отойти в сторону.
+
 	switch lastCheckedPiece.T {
 	case types.PAWN:
 		fallthrough
@@ -416,213 +430,4 @@ func (g *Game) CheckKingChecked(x, y int, kingIsWhite bool) types.Pos {
 	}
 
 	return types.Pos(-1)
-}
-
-func (g *Game) CheckValidRookMove(ix int, iy int, fx int, fy int) error {
-	if ix != fx && iy != fy {
-		return fmt.Errorf("rook moves horizontally or vertically [%d;%d] -> [%d;%d]", ix, iy, fx, fy)
-	}
-	if iy == fy {
-		if ix > fx {
-			for i := fx + 1; i < ix; i++ {
-				if g.Board[iy][i].T != types.EMPTY {
-					return fmt.Errorf("rook can't jump over pieces")
-				}
-			}
-		} else {
-			for i := ix + 1; i < fx; i++ {
-				if g.Board[iy][i].T != types.EMPTY {
-					return fmt.Errorf("rook can't jump over pieces")
-				}
-			}
-		}
-	} else if ix == fx {
-		if iy > fy {
-			for i := fy + 1; i < iy; i++ {
-				if g.Board[i][ix].T != types.EMPTY {
-					return fmt.Errorf("rook can't jump over pieces")
-				}
-			}
-		} else {
-			for i := iy + 1; i < fy; i++ {
-				if g.Board[i][ix].T != types.EMPTY {
-					return fmt.Errorf("rook can't jump over pieces")
-				}
-			}
-		}
-	}
-	return nil
-}
-
-func (g *Game) CheckValidQueenMove(ix int, iy int, fx int, fy int) error {
-	if math.Abs(float64(fx-ix)) != math.Abs(float64(fy-iy)) && (ix != fx && iy != fy) {
-		return fmt.Errorf("queen moves in straiht lines [%d;%d] -> [%d;%d]", ix, iy, fx, fy)
-	}
-	if iy == fy {
-		if ix > fx {
-			for i := fx + 1; i < ix; i++ {
-				if g.Board[iy][i].T != types.EMPTY {
-					return fmt.Errorf("queen can't jump over pieces")
-				}
-			}
-		} else {
-			for i := ix + 1; i < fx; i++ {
-				if g.Board[iy][i].T != types.EMPTY {
-					return fmt.Errorf("queen can't jump over pieces")
-				}
-			}
-		}
-	} else if ix == fx {
-		if iy > fy {
-			for i := fy + 1; i < iy; i++ {
-				if g.Board[i][ix].T != types.EMPTY {
-					return fmt.Errorf("queen can't jump over pieces")
-				}
-			}
-		} else {
-			for i := iy + 1; i < fy; i++ {
-				if g.Board[i][ix].T != types.EMPTY {
-					return fmt.Errorf("queen can't jump over pieces")
-				}
-			}
-		}
-	} else if ix > fx && iy > fy {
-		i, j := fy+1, fx+1
-		for i < iy && j < ix {
-			if g.Board[i][j].T != types.EMPTY {
-				return fmt.Errorf("queen can't jump over pieces")
-			}
-			i++
-			j++
-		}
-	} else if ix < fx && iy < fy {
-		i, j := iy+1, ix+1
-		for i < fy && j < fx {
-			if g.Board[i][j].T != types.EMPTY {
-				return fmt.Errorf("queen can't jump over pieces")
-			}
-			i++
-			j++
-		}
-	} else if ix < fx && iy > fy {
-		i, j := iy-1, ix+1
-		for i > fy && j < fx {
-			if g.Board[i][j].T != types.EMPTY {
-				return fmt.Errorf("queen can't jump over pieces")
-			}
-			i--
-			j++
-		}
-	} else if ix > fx && iy < fy {
-		i, j := iy+1, ix-1
-		for i < fy && j > fx {
-			if g.Board[i][j].T != types.EMPTY {
-				return fmt.Errorf("queen can't jump over pieces")
-			}
-			i++
-			j--
-		}
-	}
-	return nil
-}
-
-func (g *Game) CheckValidBishopMove(ix int, iy int, fx int, fy int) error {
-	if math.Abs(float64(fx-ix)) != math.Abs(float64(fy-iy)) {
-		return fmt.Errorf("bishop moves diagonally [%d;%d] -> [%d;%d]", ix, iy, fx, fy)
-	}
-	if ix > fx && iy > fy {
-		i, j := fy+1, fx+1
-		for i < iy && j < ix {
-			if g.Board[i][j].T != types.EMPTY {
-				return fmt.Errorf("bishop can't jump over pieces")
-			}
-			i++
-			j++
-		}
-	} else if ix < fx && iy < fy {
-		i, j := iy+1, ix+1
-		for i < fy && j < fx {
-			if g.Board[i][j].T != types.EMPTY {
-				return fmt.Errorf("bishop can't jump over pieces")
-			}
-			i++
-			j++
-		}
-	} else if ix < fx && iy > fy {
-		i, j := iy-1, ix+1
-		for i > fy && j < fx {
-			if g.Board[i][j].T != types.EMPTY {
-				return fmt.Errorf("bishop can't jump over pieces")
-			}
-			i--
-			j++
-		}
-	} else if ix > fx && iy < fy {
-		i, j := iy+1, ix-1
-		for i < fy && j > fx {
-			if g.Board[i][j].T != types.EMPTY {
-				return fmt.Errorf("bishop can't jump over pieces")
-			}
-			i++
-			j--
-		}
-	}
-	return nil
-}
-
-func (g *Game) CheckValidPawnMove(ix int, iy int, fx int, fy int) error {
-	// TODO: EnPassant
-	var diff int
-	white := g.Board[iy][ix].White
-	if white {
-		diff = fy - iy
-	} else {
-		diff = iy - fy
-	}
-	if diff < 1 {
-		return fmt.Errorf("can move only forward")
-	}
-	if diff > 2 || diff > 1 && (iy != 1 && iy != 6) {
-		return fmt.Errorf("can't move more than one cell forward after initial move")
-	}
-	if ix != fx {
-		if (diff > 1) || (math.Abs(float64(fx-ix)) > 1 && g.Board[fy][fx].T == types.EMPTY) {
-			return fmt.Errorf("can move only one cell forward and to the side and only to take opponents piece")
-		}
-		if g.Board[fy][fx].T == types.EMPTY {
-			return fmt.Errorf("can move one cell forward and to the side only to take opponents piece")
-		}
-	} else if white {
-		iy++
-		for iy <= fy {
-			if g.Board[iy][fx].T != types.EMPTY {
-				return fmt.Errorf("can't take piece by moving forvard")
-			}
-			iy++
-		}
-	} else {
-		iy--
-		for iy >= fy {
-			if g.Board[iy][fx].T != types.EMPTY {
-				return fmt.Errorf("can't take piece by moving forvard")
-			}
-			iy--
-		}
-	}
-	return nil
-}
-
-func (g *Game) CheckValidKingMove(ix int, iy int, fx int, fy int) error {
-	if math.Abs(float64(fx-ix)) > 1 || math.Abs(float64(fy-iy)) > 1 {
-		return fmt.Errorf("king moves one cell per turn")
-	}
-	return nil
-}
-
-func (g *Game) CheckValidKnightMove(ix int, iy int, fx int, fy int) error {
-	if math.Abs(float64(fx-ix))+math.Abs(float64(fy-iy)) != 3 ||
-		ix == fx || iy == fy {
-		return fmt.Errorf("wrong knight move [%d;%d] -> [%d;%d]", ix, iy, fx, fy)
-	}
-	return nil
 }

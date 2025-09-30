@@ -307,7 +307,7 @@ var tests = []Test{
 		},
 	},
 	{
-		"queen can't junp over pieces",
+		"queen can't jump over pieces",
 		board.NewGame([]types.Piece{
 			types.GP(types.PAWN, true, types.NewPos(3, 1)),
 			types.GP(types.PAWN, true, types.NewPos(1, 2)),
@@ -329,6 +329,7 @@ func TestEverything(t *testing.T) {
 		t.Log(test.Title)
 		for _, move := range test.Moves {
 			if err := move.Validator(&test.InitialState, move.From, move.To); err != nil {
+				test.InitialState.DebugRender()
 				t.Fatal(err)
 			}
 		}

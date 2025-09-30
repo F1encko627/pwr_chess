@@ -21,6 +21,15 @@ func (p Pos) String() string {
 	}
 }
 
+func (cur *Pos) Transform(t Pos) bool {
+	newPos := NewPos(cur.GetX()+t.GetX(), cur.GetY()+t.GetY())
+	if newPos.IsValid() {
+		*cur = newPos
+		return true
+	}
+	return false
+}
+
 func (p Pos) IsValid() bool {
 	return p > -1 && p < 64
 }
