@@ -2,29 +2,30 @@ package types
 
 import "fmt"
 
-type Type rune
+type Figure rune
 
 const (
-	KING Type = '♚' + iota
+	EMPTY Figure = ' '
+	KING         = '♚' + iota
 	QUEEN
 	ROOK
 	BISHOP
 	KNIGHT
 	PAWN
-	EMPTY = ' '
 )
 
 type Piece struct {
-	T     Type
-	ID    int8
-	Pos   Pos
-	White bool
-	Score uint8
+	T        Figure
+	ID       int
+	Pos      Position
+	IsInGame bool
+	White    bool
+	Score    uint8
 }
 
-var seq = int8(-1)
+var sequence = int(-1)
 
-func (t *Type) String() string {
+func (t *Figure) String() string {
 	return string(*t)
 }
 
@@ -32,23 +33,14 @@ func (p *Piece) String() string {
 	return fmt.Sprint(p.T.String(), p.White, p.Pos.String(), p.Score, p.ID)
 }
 
-// "NewPiece" or "GetPiece" piece with correct ID and other fields
-func GP(T Type, White bool, pos Pos) Piece {
-	if T == EMPTY {
-		return Piece{
-			T:     EMPTY,
-			ID:    -1,
-			Pos:   Pos(-1),
-			White: false,
-			Score: 0,
-		}
-	}
-	seq++
+func NewPiece(T Figure, White bool, pos Position) Piece {
+	sequence++
 	return Piece{
-		T:     T,
-		ID:    seq,
-		Pos:   pos,
-		White: White,
-		Score: 0,
+		T:        T,
+		ID:       sequence,
+		Pos:      pos,
+		IsInGame: true,
+		White:    White,
+		Score:    0,
 	}
 }

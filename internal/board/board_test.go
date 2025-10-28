@@ -14,12 +14,12 @@ type Test struct {
 	Moves        []TestMove
 }
 type TestMove struct {
-	From      types.Pos
-	To        types.Pos
+	From      types.Position
+	To        types.Position
 	Validator GameValidator
 }
 
-type GameValidator func(*board.Game, types.Pos, types.Pos) error
+type GameValidator func(*board.Game, types.Position, types.Position) error
 
 var tests = []Test{
 	{
@@ -27,23 +27,23 @@ var tests = []Test{
 		board.NewGame([]types.Piece{}),
 		[]TestMove{
 			{
-				types.NewPos(1, 1),
-				types.NewPos(1, 2),
+				types.MustNewPos(1, 1),
+				types.MustNewPos(1, 2),
 				ValidateOnError(false, "white move denied", false),
 			},
 			{
-				types.NewPos(2, 1),
-				types.NewPos(2, 2),
+				types.MustNewPos(2, 1),
+				types.MustNewPos(2, 2),
 				ValidateOnError(true, "white moved twice", false),
 			},
 			{
-				types.NewPos(1, 6),
-				types.NewPos(1, 5),
+				types.MustNewPos(1, 6),
+				types.MustNewPos(1, 5),
 				ValidateOnError(false, "black move denied", false),
 			},
 			{
-				types.NewPos(2, 6),
-				types.NewPos(2, 5),
+				types.MustNewPos(2, 6),
+				types.MustNewPos(2, 5),
 				ValidateOnError(true, "black moved twice", false),
 			},
 		},
@@ -53,8 +53,8 @@ var tests = []Test{
 		board.NewGame([]types.Piece{}),
 		[]TestMove{
 			{
-				types.NewPos(3, 5),
-				types.NewPos(3, 4),
+				types.MustNewPos(3, 5),
+				types.MustNewPos(3, 4),
 				ValidateOnError(true, "empty cell moved as piece", false),
 			},
 		},
@@ -64,18 +64,18 @@ var tests = []Test{
 		board.NewGame([]types.Piece{}),
 		[]TestMove{
 			{
-				types.NewPos(0, 0),
-				types.NewPos(1, 0),
+				types.MustNewPos(0, 0),
+				types.MustNewPos(1, 0),
 				ValidateOnError(true, "white rook took white piece", false),
 			},
 			{
-				types.NewPos(3, 1),
-				types.NewPos(3, 2),
+				types.MustNewPos(3, 1),
+				types.MustNewPos(3, 2),
 				ValidateOnError(false, "white move denied", false),
 			},
 			{
-				types.NewPos(0, 7),
-				types.NewPos(1, 7),
+				types.MustNewPos(0, 7),
+				types.MustNewPos(1, 7),
 				ValidateOnError(true, "black rook took white piece", false),
 			},
 		},
@@ -83,32 +83,32 @@ var tests = []Test{
 	{
 		"bishop сan't jump over pieces clear",
 		board.NewGame([]types.Piece{
-			types.GP(types.PAWN, false, types.NewPos(1, 2)),
-			types.GP(types.PAWN, false, types.NewPos(5, 2)),
-			types.GP(types.PAWN, false, types.NewPos(1, 6)),
-			types.GP(types.PAWN, false, types.NewPos(5, 6)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(1, 2)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(5, 2)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(1, 6)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(5, 6)),
 
-			types.GP(types.BISHOP, true, types.NewPos(3, 4)),
+			types.NewPiece(types.BISHOP, true, types.MustNewPos(3, 4)),
 		}),
 		[]TestMove{
 			{
-				types.NewPos(3, 4),
-				types.NewPos(0, 1),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(0, 1),
 				ValidateOnError(true, "bishop jumped over piece", false),
 			},
 			{
-				types.NewPos(3, 4),
-				types.NewPos(6, 1),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(6, 1),
 				ValidateOnError(true, "bishop jumped over piece", false),
 			},
 			{
-				types.NewPos(3, 4),
-				types.NewPos(0, 7),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(0, 7),
 				ValidateOnError(true, "bishop jumped over piece", false),
 			},
 			{
-				types.NewPos(3, 4),
-				types.NewPos(6, 7),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(6, 7),
 				ValidateOnError(true, "bishop jumped over piece", false),
 			},
 		},
@@ -116,37 +116,37 @@ var tests = []Test{
 	{
 		"bishop сan't jump over pieces obstructed",
 		board.NewGame([]types.Piece{
-			types.GP(types.PAWN, false, types.NewPos(5, 2)),
-			types.GP(types.PAWN, false, types.NewPos(1, 6)),
-			types.GP(types.PAWN, false, types.NewPos(1, 2)),
-			types.GP(types.PAWN, false, types.NewPos(5, 6)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(5, 2)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(1, 6)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(1, 2)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(5, 6)),
 
-			types.GP(types.PAWN, false, types.NewPos(3, 5)),
-			types.GP(types.PAWN, false, types.NewPos(3, 3)),
-			types.GP(types.PAWN, false, types.NewPos(4, 4)),
-			types.GP(types.PAWN, false, types.NewPos(2, 4)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(3, 5)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(3, 3)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(4, 4)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(2, 4)),
 
-			types.GP(types.BISHOP, true, types.NewPos(3, 4)),
+			types.NewPiece(types.BISHOP, true, types.MustNewPos(3, 4)),
 		}),
 		[]TestMove{
 			{
-				types.NewPos(3, 4),
-				types.NewPos(0, 1),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(0, 1),
 				ValidateOnError(true, "bishop jumped over piece", false),
 			},
 			{
-				types.NewPos(3, 4),
-				types.NewPos(6, 1),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(6, 1),
 				ValidateOnError(true, "bishop jumped over piece", false),
 			},
 			{
-				types.NewPos(3, 4),
-				types.NewPos(0, 7),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(0, 7),
 				ValidateOnError(true, "bishop jumped over piece", false),
 			},
 			{
-				types.NewPos(3, 4),
-				types.NewPos(6, 7),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(6, 7),
 				ValidateOnError(true, "bishop jumped over piece", false),
 			},
 		},
@@ -154,52 +154,52 @@ var tests = []Test{
 	{
 		"bishop moves straight clear",
 		board.NewGame([]types.Piece{
-			types.GP(types.PAWN, false, types.NewPos(1, 2)),
-			types.GP(types.PAWN, false, types.NewPos(5, 2)),
-			types.GP(types.PAWN, false, types.NewPos(1, 6)),
-			types.GP(types.PAWN, false, types.NewPos(5, 6)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(1, 2)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(5, 2)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(1, 6)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(5, 6)),
 
-			types.GP(types.BISHOP, true, types.NewPos(3, 4)),
+			types.NewPiece(types.BISHOP, true, types.MustNewPos(3, 4)),
 		}),
 		[]TestMove{
 			{
-				types.NewPos(3, 4),
-				types.NewPos(1, 2),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(1, 2),
 				ValidateOnError(false, "bishop not moved", true),
 			},
 			{
-				types.NewPos(3, 4),
-				types.NewPos(5, 2),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(5, 2),
 				ValidateOnError(false, "bishop not moved", true),
 			},
 			{
-				types.NewPos(3, 4),
-				types.NewPos(1, 6),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(1, 6),
 				ValidateOnError(false, "bishop not moved", true),
 			},
 			{
-				types.NewPos(3, 4),
-				types.NewPos(5, 6),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(5, 6),
 				ValidateOnError(false, "bishop not moved", true),
 			},
 			{
-				types.NewPos(3, 4),
-				types.NewPos(2, 3),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(2, 3),
 				ValidateOnError(false, "bishop not moved", true),
 			},
 			{
-				types.NewPos(3, 4),
-				types.NewPos(4, 3),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(4, 3),
 				ValidateOnError(false, "bishop not moved", true),
 			},
 			{
-				types.NewPos(3, 4),
-				types.NewPos(2, 5),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(2, 5),
 				ValidateOnError(false, "bishop not moved", true),
 			},
 			{
-				types.NewPos(3, 4),
-				types.NewPos(4, 5),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(4, 5),
 				ValidateOnError(false, "bishop not moved", true),
 			},
 		},
@@ -207,57 +207,57 @@ var tests = []Test{
 	{
 		"bishop moves straight obstructed",
 		board.NewGame([]types.Piece{
-			types.GP(types.PAWN, false, types.NewPos(5, 2)),
-			types.GP(types.PAWN, false, types.NewPos(1, 2)),
-			types.GP(types.PAWN, false, types.NewPos(1, 6)),
-			types.GP(types.PAWN, false, types.NewPos(5, 6)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(5, 2)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(1, 2)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(1, 6)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(5, 6)),
 
-			types.GP(types.PAWN, false, types.NewPos(3, 5)),
-			types.GP(types.PAWN, false, types.NewPos(3, 3)),
-			types.GP(types.PAWN, false, types.NewPos(4, 4)),
-			types.GP(types.PAWN, false, types.NewPos(2, 4)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(3, 5)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(3, 3)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(4, 4)),
+			types.NewPiece(types.PAWN, false, types.MustNewPos(2, 4)),
 
-			types.GP(types.BISHOP, true, types.NewPos(3, 4)),
+			types.NewPiece(types.BISHOP, true, types.MustNewPos(3, 4)),
 		}),
 		[]TestMove{
 			{
-				types.NewPos(3, 4),
-				types.NewPos(1, 2),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(1, 2),
 				ValidateOnError(false, "bishop not moved", true),
 			},
 			{
-				types.NewPos(3, 4),
-				types.NewPos(5, 2),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(5, 2),
 				ValidateOnError(false, "bishop not moved", true),
 			},
 			{
-				types.NewPos(3, 4),
-				types.NewPos(1, 6),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(1, 6),
 				ValidateOnError(false, "bishop not moved", true),
 			},
 			{
-				types.NewPos(3, 4),
-				types.NewPos(5, 6),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(5, 6),
 				ValidateOnError(false, "bishop not moved", true),
 			},
 			{
-				types.NewPos(3, 4),
-				types.NewPos(2, 3),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(2, 3),
 				ValidateOnError(false, "bishop not moved", true),
 			},
 			{
-				types.NewPos(3, 4),
-				types.NewPos(4, 3),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(4, 3),
 				ValidateOnError(false, "bishop not moved", true),
 			},
 			{
-				types.NewPos(3, 4),
-				types.NewPos(2, 5),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(2, 5),
 				ValidateOnError(false, "bishop not moved", true),
 			},
 			{
-				types.NewPos(3, 4),
-				types.NewPos(4, 5),
+				types.MustNewPos(3, 4),
+				types.MustNewPos(4, 5),
 				ValidateOnError(false, "bishop not moved", true),
 			},
 		},
@@ -265,43 +265,43 @@ var tests = []Test{
 	{
 		"black king gets checked by everyone",
 		board.NewGame([]types.Piece{
-			types.GP(types.KING, false, types.NewPos(0, 7)),
+			types.NewPiece(types.KING, false, types.MustNewPos(0, 7)),
 
-			types.GP(types.QUEEN, true, types.NewPos(2, 1)),
-			types.GP(types.ROOK, true, types.NewPos(3, 1)),
-			types.GP(types.BISHOP, true, types.NewPos(4, 1)),
-			types.GP(types.PAWN, true, types.NewPos(1, 5)),
-			types.GP(types.KNIGHT, true, types.NewPos(4, 5)),
+			types.NewPiece(types.QUEEN, true, types.MustNewPos(2, 1)),
+			types.NewPiece(types.ROOK, true, types.MustNewPos(3, 1)),
+			types.NewPiece(types.BISHOP, true, types.MustNewPos(4, 1)),
+			types.NewPiece(types.PAWN, true, types.MustNewPos(1, 5)),
+			types.NewPiece(types.KNIGHT, true, types.MustNewPos(4, 5)),
 		}),
 		[]TestMove{
 			{
-				types.NewPos(2, 1),
-				types.NewPos(2, 7),
+				types.MustNewPos(2, 1),
+				types.MustNewPos(2, 7),
 				ValidateKingChecked(true, "no queen horizontal check", true),
 			},
 			{
-				types.NewPos(2, 1),
-				types.NewPos(4, 3),
+				types.MustNewPos(2, 1),
+				types.MustNewPos(4, 3),
 				ValidateKingChecked(true, "no queen diagonal check", true),
 			},
 			{
-				types.NewPos(3, 1),
-				types.NewPos(3, 7),
+				types.MustNewPos(3, 1),
+				types.MustNewPos(3, 7),
 				ValidateKingChecked(true, "no rook check", true),
 			},
 			{
-				types.NewPos(4, 1),
-				types.NewPos(5, 2),
+				types.MustNewPos(4, 1),
+				types.MustNewPos(5, 2),
 				ValidateKingChecked(true, "no bishop check", true),
 			},
 			{
-				types.NewPos(1, 5),
-				types.NewPos(1, 6),
+				types.MustNewPos(1, 5),
+				types.MustNewPos(1, 6),
 				ValidateKingChecked(true, "no pawn check", true),
 			},
 			{
-				types.NewPos(4, 5),
-				types.NewPos(2, 6),
+				types.MustNewPos(4, 5),
+				types.MustNewPos(2, 6),
 				ValidateKingChecked(true, "no knight check", true),
 			},
 		},
@@ -309,16 +309,16 @@ var tests = []Test{
 	{
 		"queen can't jump over pieces",
 		board.NewGame([]types.Piece{
-			types.GP(types.PAWN, true, types.NewPos(3, 1)),
-			types.GP(types.PAWN, true, types.NewPos(1, 2)),
-			types.GP(types.PAWN, true, types.NewPos(5, 2)),
-			types.GP(types.PAWN, true, types.NewPos(5, 4)),
-			types.GP(types.PAWN, true, types.NewPos(4, 5)),
-			types.GP(types.PAWN, true, types.NewPos(3, 5)),
-			types.GP(types.PAWN, true, types.NewPos(0, 4)),
-			types.GP(types.PAWN, true, types.NewPos(0, 7)),
+			types.NewPiece(types.PAWN, true, types.MustNewPos(3, 1)),
+			types.NewPiece(types.PAWN, true, types.MustNewPos(1, 2)),
+			types.NewPiece(types.PAWN, true, types.MustNewPos(5, 2)),
+			types.NewPiece(types.PAWN, true, types.MustNewPos(5, 4)),
+			types.NewPiece(types.PAWN, true, types.MustNewPos(4, 5)),
+			types.NewPiece(types.PAWN, true, types.MustNewPos(3, 5)),
+			types.NewPiece(types.PAWN, true, types.MustNewPos(0, 4)),
+			types.NewPiece(types.PAWN, true, types.MustNewPos(0, 7)),
 
-			types.GP(types.QUEEN, false, types.NewPos(3, 4)),
+			types.NewPiece(types.QUEEN, false, types.MustNewPos(3, 4)),
 		}),
 		[]TestMove{},
 	},
@@ -337,7 +337,7 @@ func TestEverything(t *testing.T) {
 }
 
 func ValidateOnError(expectError bool, errorText string, resetAfter bool) GameValidator {
-	return func(Game *board.Game, From types.Pos, To types.Pos) error {
+	return func(Game *board.Game, From types.Position, To types.Position) error {
 		init := *Game
 		err := Game.MovePiece(From.GetX(), From.GetY(), To.GetX(), To.GetY())
 		if (err != nil) != expectError {
@@ -356,7 +356,7 @@ func ValidateOnError(expectError bool, errorText string, resetAfter bool) GameVa
 }
 
 func ValidateKingChecked(expectCheck bool, errorText string, resetAfter bool) GameValidator {
-	return func(Game *board.Game, From types.Pos, To types.Pos) error {
+	return func(Game *board.Game, From types.Position, To types.Position) error {
 		init := *Game
 		err := Game.MovePiece(From.GetX(), From.GetY(), To.GetX(), To.GetY())
 		if err != nil {

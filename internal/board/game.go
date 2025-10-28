@@ -11,8 +11,8 @@ import (
 
 type Game struct {
 	Board             [8][8]*types.Piece
-	WhitePieces       map[types.Type][]types.Piece
-	BlackPieces       map[types.Type][]types.Piece // plus empty tile
+	WhitePieces       map[types.Figure][]types.Piece
+	BlackPieces       map[types.Figure][]types.Piece // plus empty tile
 	LastMovedPiece    *types.Piece
 	TurnNum           int
 	IsBlackTurn       bool
@@ -26,41 +26,41 @@ type Game struct {
 }
 
 var classic = []types.Piece{
-	types.GP(types.PAWN, true, types.NewPos(0, 1)),
-	types.GP(types.PAWN, true, types.NewPos(1, 1)),
-	types.GP(types.PAWN, true, types.NewPos(2, 1)),
-	types.GP(types.PAWN, true, types.NewPos(3, 1)),
-	types.GP(types.PAWN, true, types.NewPos(4, 1)),
-	types.GP(types.PAWN, true, types.NewPos(5, 1)),
-	types.GP(types.PAWN, true, types.NewPos(6, 1)),
-	types.GP(types.PAWN, true, types.NewPos(7, 1)),
+	types.NewPiece(types.PAWN, true, types.MustNewPos(0, 1)),
+	types.NewPiece(types.PAWN, true, types.MustNewPos(1, 1)),
+	types.NewPiece(types.PAWN, true, types.MustNewPos(2, 1)),
+	types.NewPiece(types.PAWN, true, types.MustNewPos(3, 1)),
+	types.NewPiece(types.PAWN, true, types.MustNewPos(4, 1)),
+	types.NewPiece(types.PAWN, true, types.MustNewPos(5, 1)),
+	types.NewPiece(types.PAWN, true, types.MustNewPos(6, 1)),
+	types.NewPiece(types.PAWN, true, types.MustNewPos(7, 1)),
 
-	types.GP(types.ROOK, true, types.NewPos(0, 0)),
-	types.GP(types.KNIGHT, true, types.NewPos(1, 0)),
-	types.GP(types.BISHOP, true, types.NewPos(2, 0)),
-	types.GP(types.KING, true, types.NewPos(3, 0)),
-	types.GP(types.QUEEN, true, types.NewPos(4, 0)),
-	types.GP(types.BISHOP, true, types.NewPos(5, 0)),
-	types.GP(types.KNIGHT, true, types.NewPos(6, 0)),
-	types.GP(types.ROOK, true, types.NewPos(7, 0)),
+	types.NewPiece(types.ROOK, true, types.MustNewPos(0, 0)),
+	types.NewPiece(types.KNIGHT, true, types.MustNewPos(1, 0)),
+	types.NewPiece(types.BISHOP, true, types.MustNewPos(2, 0)),
+	types.NewPiece(types.KING, true, types.MustNewPos(3, 0)),
+	types.NewPiece(types.QUEEN, true, types.MustNewPos(4, 0)),
+	types.NewPiece(types.BISHOP, true, types.MustNewPos(5, 0)),
+	types.NewPiece(types.KNIGHT, true, types.MustNewPos(6, 0)),
+	types.NewPiece(types.ROOK, true, types.MustNewPos(7, 0)),
 
-	types.GP(types.PAWN, false, types.NewPos(0, 6)),
-	types.GP(types.PAWN, false, types.NewPos(1, 6)),
-	types.GP(types.PAWN, false, types.NewPos(2, 6)),
-	types.GP(types.PAWN, false, types.NewPos(3, 6)),
-	types.GP(types.PAWN, false, types.NewPos(4, 6)),
-	types.GP(types.PAWN, false, types.NewPos(5, 6)),
-	types.GP(types.PAWN, false, types.NewPos(6, 6)),
-	types.GP(types.PAWN, false, types.NewPos(7, 6)),
+	types.NewPiece(types.PAWN, false, types.MustNewPos(0, 6)),
+	types.NewPiece(types.PAWN, false, types.MustNewPos(1, 6)),
+	types.NewPiece(types.PAWN, false, types.MustNewPos(2, 6)),
+	types.NewPiece(types.PAWN, false, types.MustNewPos(3, 6)),
+	types.NewPiece(types.PAWN, false, types.MustNewPos(4, 6)),
+	types.NewPiece(types.PAWN, false, types.MustNewPos(5, 6)),
+	types.NewPiece(types.PAWN, false, types.MustNewPos(6, 6)),
+	types.NewPiece(types.PAWN, false, types.MustNewPos(7, 6)),
 
-	types.GP(types.ROOK, false, types.NewPos(0, 7)),
-	types.GP(types.KNIGHT, false, types.NewPos(1, 7)),
-	types.GP(types.BISHOP, false, types.NewPos(2, 7)),
-	types.GP(types.KING, false, types.NewPos(3, 7)),
-	types.GP(types.QUEEN, false, types.NewPos(4, 7)),
-	types.GP(types.BISHOP, false, types.NewPos(5, 7)),
-	types.GP(types.KNIGHT, false, types.NewPos(6, 7)),
-	types.GP(types.ROOK, false, types.NewPos(7, 7)),
+	types.NewPiece(types.ROOK, false, types.MustNewPos(0, 7)),
+	types.NewPiece(types.KNIGHT, false, types.MustNewPos(1, 7)),
+	types.NewPiece(types.BISHOP, false, types.MustNewPos(2, 7)),
+	types.NewPiece(types.KING, false, types.MustNewPos(3, 7)),
+	types.NewPiece(types.QUEEN, false, types.MustNewPos(4, 7)),
+	types.NewPiece(types.BISHOP, false, types.MustNewPos(5, 7)),
+	types.NewPiece(types.KNIGHT, false, types.MustNewPos(6, 7)),
+	types.NewPiece(types.ROOK, false, types.MustNewPos(7, 7)),
 }
 
 func NewGame(start []types.Piece) Game {
@@ -70,10 +70,10 @@ func NewGame(start []types.Piece) Game {
 
 	g := Game{}
 
-	g.WhitePieces = make(map[types.Type][]types.Piece)
-	g.BlackPieces = make(map[types.Type][]types.Piece)
+	g.WhitePieces = make(map[types.Figure][]types.Piece)
+	g.BlackPieces = make(map[types.Figure][]types.Piece)
 
-	empty := types.GP(types.EMPTY, false, types.Pos(-1))
+	empty := types.NewPiece(types.EMPTY, false, types.Pos(-1))
 
 	g.BlackPieces[types.EMPTY] = append(g.BlackPieces[types.EMPTY], empty)
 
@@ -92,7 +92,7 @@ func NewGame(start []types.Piece) Game {
 			if g.Board[i][j] == nil {
 				g.Board[i][j] = &g.BlackPieces[types.EMPTY][0]
 			} else {
-				g.Board[i][j].Pos = types.NewPos(j, i)
+				g.Board[i][j].Pos = types.MustNewPos(j, i)
 			}
 		}
 	}
@@ -155,9 +155,9 @@ func (g *Game) BasicMoveChecks(ix, iy, fx, fy int) error {
 		return fmt.Errorf("same cell move (no move) [%d;%d]", ix, iy)
 	}
 	// Outside of the board
-	if !types.NewPos(ix, iy).IsValid() {
+	if !types.MustNewPos(ix, iy).IsValid() {
 		return fmt.Errorf("out of bounds position [%d;%d]", ix, iy)
-	} else if !types.NewPos(fx, fy).IsValid() {
+	} else if !types.MustNewPos(fx, fy).IsValid() {
 		return fmt.Errorf("out of bounds move [%d;%d]", fx, fy)
 	}
 	// Wrong color move
@@ -228,8 +228,8 @@ func (g *Game) MovePiece(ix int, iy int, fx int, fy int) error {
 	game_save := *g
 
 	// General move execution
-	g.Board[fy][fx].Pos = types.NewPos(-1, -1)
-	g.Board[iy][ix].Pos = types.NewPos(fx, fy)
+	g.Board[fy][fx].Pos = types.Pos(-1)
+	g.Board[iy][ix].Pos = types.MustNewPos(fx, fy)
 	g.Board[fy][fx] = g.Board[iy][ix]
 	g.Board[iy][ix] = &g.BlackPieces[types.EMPTY][0]
 
@@ -292,14 +292,14 @@ func (g *Game) CheckForCheckMate(lastCheckedPiece *types.Piece) bool {
 }
 
 func (g *Game) CheckKingChecked(x, y int, kingIsWhite bool) types.Pos {
-	log.Trace().Str("pos", types.NewPos(x, y).String()).Bool("kingIsWhite", kingIsWhite).Msg("CheckKingChecked")
+	log.Trace().Str("pos", types.MustNewPos(x, y).String()).Bool("kingIsWhite", kingIsWhite).Msg("CheckKingChecked")
 	// up
 	for i := y + 1; i < 8; i++ {
 		if g.Board[i][x].White != kingIsWhite &&
 			(g.Board[i][x].T == types.ROOK ||
 				g.Board[i][x].T == types.QUEEN) {
 			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[i][x].String()).Msg("king attacked")
-			return types.NewPos(x, i)
+			return types.MustNewPos(x, i)
 		} else if g.Board[i][x].T != types.EMPTY {
 			break
 		}
@@ -310,7 +310,7 @@ func (g *Game) CheckKingChecked(x, y int, kingIsWhite bool) types.Pos {
 			(g.Board[i][x].T == types.ROOK ||
 				g.Board[i][x].T == types.QUEEN) {
 			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[i][x].String()).Msg("king attacked")
-			return types.NewPos(x, i)
+			return types.MustNewPos(x, i)
 		} else if g.Board[i][x].T != types.EMPTY {
 			break
 		}
@@ -321,7 +321,7 @@ func (g *Game) CheckKingChecked(x, y int, kingIsWhite bool) types.Pos {
 			(g.Board[y][i].T == types.ROOK ||
 				g.Board[y][i].T == types.QUEEN) {
 			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[y][i].String()).Msg("king attacked")
-			return types.NewPos(i, y)
+			return types.MustNewPos(i, y)
 		} else if g.Board[y][i].T != types.EMPTY {
 			break
 		}
@@ -332,7 +332,7 @@ func (g *Game) CheckKingChecked(x, y int, kingIsWhite bool) types.Pos {
 			(g.Board[y][i].T == types.ROOK ||
 				g.Board[y][i].T == types.QUEEN) {
 			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[y][i].String()).Msg("king attacked")
-			return types.NewPos(i, y)
+			return types.MustNewPos(i, y)
 		} else if g.Board[y][i].T != types.EMPTY {
 			break
 		}
@@ -344,7 +344,7 @@ func (g *Game) CheckKingChecked(x, y int, kingIsWhite bool) types.Pos {
 				g.Board[i][j].T == types.QUEEN ||
 				(g.Board[i][j].T == types.PAWN && g.Board[i][j].White)) {
 			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[i][j].String()).Msg("king attacked")
-			return types.NewPos(j, i)
+			return types.MustNewPos(j, i)
 		} else if g.Board[i][j].T != types.EMPTY {
 			break
 		}
@@ -359,7 +359,7 @@ func (g *Game) CheckKingChecked(x, y int, kingIsWhite bool) types.Pos {
 				g.Board[i][j].T == types.QUEEN ||
 				g.Board[i][j].T == types.PAWN && g.Board[i][j].White) {
 			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[i][j].String()).Msg("king attacked")
-			return types.NewPos(j, i)
+			return types.MustNewPos(j, i)
 		} else if g.Board[i][j].T != types.EMPTY {
 			break
 		}
@@ -374,7 +374,7 @@ func (g *Game) CheckKingChecked(x, y int, kingIsWhite bool) types.Pos {
 				g.Board[i][j].T == types.QUEEN ||
 				g.Board[i][j].T == types.PAWN && !g.Board[i][j].White) {
 			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[i][j].String()).Msg("king attacked")
-			return types.NewPos(j, i)
+			return types.MustNewPos(j, i)
 		} else if g.Board[i][j].T != types.EMPTY {
 			break
 		}
@@ -389,7 +389,7 @@ func (g *Game) CheckKingChecked(x, y int, kingIsWhite bool) types.Pos {
 				g.Board[i][j].T == types.QUEEN ||
 				g.Board[i][j].T == types.PAWN && !g.Board[i][j].White) {
 			log.Trace().Bool("isKingWhite", kingIsWhite).Str("CheckedBy", g.Board[i][j].String()).Msg("king attacked")
-			return types.NewPos(j, i)
+			return types.MustNewPos(j, i)
 		} else if g.Board[i][j].T != types.EMPTY {
 			break
 		}
@@ -399,14 +399,14 @@ func (g *Game) CheckKingChecked(x, y int, kingIsWhite bool) types.Pos {
 
 	// KNIGHT CHECK
 	possibleKnight := []types.Pos{
-		types.NewPos(x+2, y+1),
-		types.NewPos(x+1, y+2),
-		types.NewPos(x-2, y-1),
-		types.NewPos(x-1, y-2),
-		types.NewPos(x-2, y+1),
-		types.NewPos(x-1, y+2),
-		types.NewPos(x+2, y-1),
-		types.NewPos(x+1, y-2),
+		types.MustNewPos(x+2, y+1),
+		types.MustNewPos(x+1, y+2),
+		types.MustNewPos(x-2, y-1),
+		types.MustNewPos(x-1, y-2),
+		types.MustNewPos(x-2, y+1),
+		types.MustNewPos(x-1, y+2),
+		types.MustNewPos(x+2, y-1),
+		types.MustNewPos(x+1, y-2),
 	}
 	for _, position := range possibleKnight {
 		if !position.IsValid() {

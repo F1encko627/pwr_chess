@@ -1,43 +1,41 @@
 package types
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 // For Cartesian coordinates... skill issue
-type Pos int8
+type Position struct {
+	x, y int
+}
 
-func NewPos(x, y int) Pos {
-	if x > -1 && y > -1 && x < 8 && y < 8 {
-		return Pos(y*8 + x)
-	} else {
-		return Pos(-1)
+var ErrOutOfBounds = errors.New("out of bounds position")
+
+func NewPos(x, y int) (Position, error) {
+	if x < 0 || x > 8 {
+		return Position{},
+			errors.Join(ErrOutOfBounds, errors.New(Position{x, y}.String()))
 	}
+	return Position{x, y}, nil
 }
 
-func (p Pos) String() string {
-	if p.IsValid() {
-		return fmt.Sprintf("[%d;%d]", p.GetX(), p.GetY())
-	} else {
-		return "NaN"
+func MustNewPos(x, y int) Position {
+	var position, err = NewPos(x, y)
+	if err != nil {
+		panic(err)
 	}
+	return position
 }
 
-func (cur *Pos) Transform(t Pos) bool {
-	newPos := NewPos(cur.GetX()+t.GetX(), cur.GetY()+t.GetY())
-	if newPos.IsValid() {
-		*cur = newPos
-		return true
-	}
-	return false
+func (p Position) String() string {
+	return fmt.Sprintf("(%d; %d)", p.GetX(), p.GetY())
 }
 
-func (p Pos) IsValid() bool {
-	return p > -1 && p < 64
+func (p Position) GetX() int {
+	return p.x
 }
 
-func (p Pos) GetX() int {
-	return int(p % 8)
-}
-
-func (p Pos) GetY() int {
-	return int(p / 8)
+func (p Position) GetY() int {
+	return p.y
 }

@@ -38,7 +38,7 @@ func NewTemplate() *Template {
 			"string": func(x fmt.Stringer) string {
 				return x.String()
 			},
-			"name": func(x types.Type) string {
+			"name": func(x types.Figure) string {
 				switch x {
 				case types.KING:
 					return "king"
