@@ -32,6 +32,25 @@ const (
 	CONST_FIGURE_LIST_LENGTH
 )
 
+func (f Figure) Name() string {
+	switch f {
+	case KING:
+		return "king"
+	case QUEEN:
+		return "queen"
+	case KNIGHT:
+		return "knight"
+	case ROOK:
+		return "rook"
+	case BISHOP:
+		return "bishop"
+	case PAWN:
+		return "pawn"
+	default:
+		return "???"
+	}
+}
+
 func (t Figure) String() string {
 	return string(t)
 }

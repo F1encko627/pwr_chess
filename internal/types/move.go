@@ -31,7 +31,7 @@ var (
 	ErrFinalPos       = errors.New("invalid final position")
 )
 
-func Getmove(ix, iy, fx, fy int) (Move, error) {
+func GetMove(ix, iy, fx, fy int) (Move, error) {
 	posInit, err := NewPos(ix, iy)
 	if err != nil {
 		return Move{}, errors.Join(ErrInitialPos, err)

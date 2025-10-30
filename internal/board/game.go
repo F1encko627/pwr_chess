@@ -6,9 +6,7 @@ import (
 )
 
 type Game struct {
-	Board             [8][8]*types.Piece
-	WhitePieces       map[types.Figure][]types.Piece
-	BlackPieces       map[types.Figure][]types.Piece // plus empty tile
+	Board             types.Board
 	LastMovedPiece    *types.Piece
 	TurnNum           int
 	IsBlackTurn       bool
@@ -19,6 +17,9 @@ type Game struct {
 	IsPause           bool
 	EnPassantPawn     *types.Piece
 	LastMoveTime      time.Time
+}
+
+type GameOutDto struct {
 }
 
 var classic = []types.Piece{
@@ -57,4 +58,20 @@ var classic = []types.Piece{
 	types.MustNewPiece(types.BISHOP, false, types.MustNewPos(5, 7)),
 	types.MustNewPiece(types.KNIGHT, false, types.MustNewPos(6, 7)),
 	types.MustNewPiece(types.ROOK, false, types.MustNewPos(7, 7)),
+}
+
+func (g *Game) MakeMove(move types.Move) error {
+	return nil
+}
+
+func (g *Game) GetForRender() GameOutDto {
+	return GameOutDto{}
+}
+
+func NewGame(pieces []types.Piece) Game {
+	board, err := types.GetBoard(classic)
+	if err != nil {
+		panic(err)
+	}
+	return Game{Board: board}
 }

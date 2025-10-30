@@ -39,20 +39,7 @@ func NewTemplate() *Template {
 				return x.String()
 			},
 			"name": func(x types.Figure) string {
-				switch x {
-				case types.KING:
-					return "king"
-				case types.QUEEN:
-					return "queen"
-				case types.KNIGHT:
-					return "knight"
-				case types.ROOK:
-					return "rook"
-				case types.BISHOP:
-					return "bishop"
-				default:
-					return "pawn"
-				}
+				return x.Name()
 			},
 		}).ParseGlob("./web/*.tmpl")),
 	}
@@ -85,14 +72,19 @@ func Move(c echo.Context) error {
 	iy, _ := strconv.Atoi(c.QueryParam("iy"))
 	fx, _ := strconv.Atoi(c.QueryParam("fx"))
 	fy, _ := strconv.Atoi(c.QueryParam("fy"))
-	fmt.Println(ix, iy, fx, fy)
-	err := game.MovePiece(ix, iy, fx, fy)
+
+	move, err := types.GetMove(ix, iy, fx, fy)
+	if err != nil {
+		c.Logger().Error(err)
+	}
+
+	game.MakeMove(move)
 
 	if err != nil {
 		c.Logger().Error(err)
 	}
 
-	return c.Render(http.StatusOK, "board.html.tmpl", game)
+	return c.Render(http.StatusOK, "board.html.tmpl", game.GetForRender())
 }
 
 // var test_case = []types.Piece{
