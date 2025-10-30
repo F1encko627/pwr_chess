@@ -39,7 +39,7 @@ func (g *Game) CheckValidBishopMove(ix int, iy int, fx int, fy int) error {
 func (g *Game) CheckValidPawnMove(ix int, iy int, fx int, fy int) error {
 	// TODO: EnPassant
 	var delta_y int
-	white := g.Board[iy][ix].White
+	white := g.Board[iy][ix].IsWhite()
 	if white {
 		delta_y = fy - iy
 	} else {
@@ -52,16 +52,16 @@ func (g *Game) CheckValidPawnMove(ix int, iy int, fx int, fy int) error {
 		return fmt.Errorf("can't move more than one cell forward after initial move")
 	}
 	if ix != fx {
-		if (delta_y > 1) || (math.Abs(float64(fx-ix)) > 1 && g.Board[fy][fx].T == types.EMPTY) {
+		if (delta_y > 1) || (math.Abs(float64(fx-ix)) > 1 && g.Board[fy][fx].Type == types.EMPTY) {
 			return fmt.Errorf("can move only one cell forward and to the side and only to take opponents piece")
 		}
-		if g.Board[fy][fx].T == types.EMPTY {
+		if g.Board[fy][fx].Type == types.EMPTY {
 			return fmt.Errorf("can move one cell forward and to the side only to take opponents piece")
 		}
 	} else if white {
 		iy++
 		for iy <= fy {
-			if g.Board[iy][fx].T != types.EMPTY {
+			if g.Board[iy][fx].Type != types.EMPTY {
 				return fmt.Errorf("can't take piece by moving forvard")
 			}
 			iy++
@@ -69,7 +69,7 @@ func (g *Game) CheckValidPawnMove(ix int, iy int, fx int, fy int) error {
 	} else {
 		iy--
 		for iy >= fy {
-			if g.Board[iy][fx].T != types.EMPTY {
+			if g.Board[iy][fx].Type != types.EMPTY {
 				return fmt.Errorf("can't take piece by moving forvard")
 			}
 			iy--
@@ -97,13 +97,13 @@ func (g *Game) CheckNoJumpOverPieceStraight(ix int, iy int, fx int, fy int) erro
 	if iy == fy {
 		if ix > fx {
 			for i := fx + 1; i < ix; i++ {
-				if g.Board[iy][i].T != types.EMPTY {
+				if g.Board[iy][i].Type != types.EMPTY {
 					return fmt.Errorf("can't jump over pieces")
 				}
 			}
 		} else {
 			for i := ix + 1; i < fx; i++ {
-				if g.Board[iy][i].T != types.EMPTY {
+				if g.Board[iy][i].Type != types.EMPTY {
 					return fmt.Errorf("can't jump over pieces")
 				}
 			}
@@ -111,13 +111,13 @@ func (g *Game) CheckNoJumpOverPieceStraight(ix int, iy int, fx int, fy int) erro
 	} else if ix == fx {
 		if iy > fy {
 			for i := fy + 1; i < iy; i++ {
-				if g.Board[i][ix].T != types.EMPTY {
+				if g.Board[i][ix].Type != types.EMPTY {
 					return fmt.Errorf("can't jump over pieces")
 				}
 			}
 		} else {
 			for i := iy + 1; i < fy; i++ {
-				if g.Board[i][ix].T != types.EMPTY {
+				if g.Board[i][ix].Type != types.EMPTY {
 					return fmt.Errorf("can't jump over piece")
 				}
 			}
@@ -132,7 +132,7 @@ func (g *Game) CheckNoJumpOverPieceDiagonal(ix int, iy int, fx int, fy int) erro
 	if ix > fx && iy > fy {
 		i, j := fy+1, fx+1
 		for i < iy && j < ix {
-			if g.Board[i][j].T != types.EMPTY {
+			if g.Board[i][j].Type != types.EMPTY {
 				return err
 			}
 			i++
@@ -141,7 +141,7 @@ func (g *Game) CheckNoJumpOverPieceDiagonal(ix int, iy int, fx int, fy int) erro
 	} else if ix < fx && iy < fy {
 		i, j := iy+1, ix+1
 		for i < fy && j < fx {
-			if g.Board[i][j].T != types.EMPTY {
+			if g.Board[i][j].Type != types.EMPTY {
 				return err
 			}
 			i++
@@ -150,7 +150,7 @@ func (g *Game) CheckNoJumpOverPieceDiagonal(ix int, iy int, fx int, fy int) erro
 	} else if ix < fx && iy > fy {
 		i, j := iy-1, ix+1
 		for i > fy && j < fx {
-			if g.Board[i][j].T != types.EMPTY {
+			if g.Board[i][j].Type != types.EMPTY {
 				return err
 			}
 			i--
@@ -159,7 +159,7 @@ func (g *Game) CheckNoJumpOverPieceDiagonal(ix int, iy int, fx int, fy int) erro
 	} else if ix > fx && iy < fy {
 		i, j := iy+1, ix-1
 		for i < fy && j > fx {
-			if g.Board[i][j].T != types.EMPTY {
+			if g.Board[i][j].Type != types.EMPTY {
 				return err
 			}
 			i++

@@ -83,12 +83,12 @@ var tests = []Test{
 	{
 		"bishop сan't jump over pieces clear",
 		board.NewGame([]types.Piece{
-			types.NewPiece(types.PAWN, false, types.MustNewPos(1, 2)),
-			types.NewPiece(types.PAWN, false, types.MustNewPos(5, 2)),
-			types.NewPiece(types.PAWN, false, types.MustNewPos(1, 6)),
-			types.NewPiece(types.PAWN, false, types.MustNewPos(5, 6)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(1, 2)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(5, 2)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(1, 6)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(5, 6)),
 
-			types.NewPiece(types.BISHOP, true, types.MustNewPos(3, 4)),
+			types.MustNewPiece(types.BISHOP, true, types.MustNewPos(3, 4)),
 		}),
 		[]TestMove{
 			{
@@ -116,17 +116,17 @@ var tests = []Test{
 	{
 		"bishop сan't jump over pieces obstructed",
 		board.NewGame([]types.Piece{
-			types.NewPiece(types.PAWN, false, types.MustNewPos(5, 2)),
-			types.NewPiece(types.PAWN, false, types.MustNewPos(1, 6)),
-			types.NewPiece(types.PAWN, false, types.MustNewPos(1, 2)),
-			types.NewPiece(types.PAWN, false, types.MustNewPos(5, 6)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(5, 2)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(1, 6)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(1, 2)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(5, 6)),
 
-			types.NewPiece(types.PAWN, false, types.MustNewPos(3, 5)),
-			types.NewPiece(types.PAWN, false, types.MustNewPos(3, 3)),
-			types.NewPiece(types.PAWN, false, types.MustNewPos(4, 4)),
-			types.NewPiece(types.PAWN, false, types.MustNewPos(2, 4)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(3, 5)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(3, 3)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(4, 4)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(2, 4)),
 
-			types.NewPiece(types.BISHOP, true, types.MustNewPos(3, 4)),
+			types.MustNewPiece(types.BISHOP, true, types.MustNewPos(3, 4)),
 		}),
 		[]TestMove{
 			{
@@ -154,12 +154,12 @@ var tests = []Test{
 	{
 		"bishop moves straight clear",
 		board.NewGame([]types.Piece{
-			types.NewPiece(types.PAWN, false, types.MustNewPos(1, 2)),
-			types.NewPiece(types.PAWN, false, types.MustNewPos(5, 2)),
-			types.NewPiece(types.PAWN, false, types.MustNewPos(1, 6)),
-			types.NewPiece(types.PAWN, false, types.MustNewPos(5, 6)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(1, 2)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(5, 2)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(1, 6)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(5, 6)),
 
-			types.NewPiece(types.BISHOP, true, types.MustNewPos(3, 4)),
+			types.MustNewPiece(types.BISHOP, true, types.MustNewPos(3, 4)),
 		}),
 		[]TestMove{
 			{
@@ -207,17 +207,17 @@ var tests = []Test{
 	{
 		"bishop moves straight obstructed",
 		board.NewGame([]types.Piece{
-			types.NewPiece(types.PAWN, false, types.MustNewPos(5, 2)),
-			types.NewPiece(types.PAWN, false, types.MustNewPos(1, 2)),
-			types.NewPiece(types.PAWN, false, types.MustNewPos(1, 6)),
-			types.NewPiece(types.PAWN, false, types.MustNewPos(5, 6)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(5, 2)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(1, 2)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(1, 6)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(5, 6)),
 
-			types.NewPiece(types.PAWN, false, types.MustNewPos(3, 5)),
-			types.NewPiece(types.PAWN, false, types.MustNewPos(3, 3)),
-			types.NewPiece(types.PAWN, false, types.MustNewPos(4, 4)),
-			types.NewPiece(types.PAWN, false, types.MustNewPos(2, 4)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(3, 5)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(3, 3)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(4, 4)),
+			types.MustNewPiece(types.PAWN, false, types.MustNewPos(2, 4)),
 
-			types.NewPiece(types.BISHOP, true, types.MustNewPos(3, 4)),
+			types.MustNewPiece(types.BISHOP, true, types.MustNewPos(3, 4)),
 		}),
 		[]TestMove{
 			{
@@ -265,13 +265,13 @@ var tests = []Test{
 	{
 		"black king gets checked by everyone",
 		board.NewGame([]types.Piece{
-			types.NewPiece(types.KING, false, types.MustNewPos(0, 7)),
+			types.MustNewPiece(types.KING, false, types.MustNewPos(0, 7)),
 
-			types.NewPiece(types.QUEEN, true, types.MustNewPos(2, 1)),
-			types.NewPiece(types.ROOK, true, types.MustNewPos(3, 1)),
-			types.NewPiece(types.BISHOP, true, types.MustNewPos(4, 1)),
-			types.NewPiece(types.PAWN, true, types.MustNewPos(1, 5)),
-			types.NewPiece(types.KNIGHT, true, types.MustNewPos(4, 5)),
+			types.MustNewPiece(types.QUEEN, true, types.MustNewPos(2, 1)),
+			types.MustNewPiece(types.ROOK, true, types.MustNewPos(3, 1)),
+			types.MustNewPiece(types.BISHOP, true, types.MustNewPos(4, 1)),
+			types.MustNewPiece(types.PAWN, true, types.MustNewPos(1, 5)),
+			types.MustNewPiece(types.KNIGHT, true, types.MustNewPos(4, 5)),
 		}),
 		[]TestMove{
 			{
@@ -309,16 +309,16 @@ var tests = []Test{
 	{
 		"queen can't jump over pieces",
 		board.NewGame([]types.Piece{
-			types.NewPiece(types.PAWN, true, types.MustNewPos(3, 1)),
-			types.NewPiece(types.PAWN, true, types.MustNewPos(1, 2)),
-			types.NewPiece(types.PAWN, true, types.MustNewPos(5, 2)),
-			types.NewPiece(types.PAWN, true, types.MustNewPos(5, 4)),
-			types.NewPiece(types.PAWN, true, types.MustNewPos(4, 5)),
-			types.NewPiece(types.PAWN, true, types.MustNewPos(3, 5)),
-			types.NewPiece(types.PAWN, true, types.MustNewPos(0, 4)),
-			types.NewPiece(types.PAWN, true, types.MustNewPos(0, 7)),
+			types.MustNewPiece(types.PAWN, true, types.MustNewPos(3, 1)),
+			types.MustNewPiece(types.PAWN, true, types.MustNewPos(1, 2)),
+			types.MustNewPiece(types.PAWN, true, types.MustNewPos(5, 2)),
+			types.MustNewPiece(types.PAWN, true, types.MustNewPos(5, 4)),
+			types.MustNewPiece(types.PAWN, true, types.MustNewPos(4, 5)),
+			types.MustNewPiece(types.PAWN, true, types.MustNewPos(3, 5)),
+			types.MustNewPiece(types.PAWN, true, types.MustNewPos(0, 4)),
+			types.MustNewPiece(types.PAWN, true, types.MustNewPos(0, 7)),
 
-			types.NewPiece(types.QUEEN, false, types.MustNewPos(3, 4)),
+			types.MustNewPiece(types.QUEEN, false, types.MustNewPos(3, 4)),
 		}),
 		[]TestMove{},
 	},
