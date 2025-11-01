@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -31,7 +32,7 @@ func (t *Template) Render(w io.Writer, name string, data any, c echo.Context) er
 
 func NewTemplate() *Template {
 	return &Template{
-		templates: template.Must(template.New("board.html.tmpl").Funcs(template.FuncMap{
+		templates: template.Must(template.New("board.html").Funcs(template.FuncMap{
 			"even": func(x, y int) bool {
 				return (x+y)%2 == 0
 			},
@@ -41,7 +42,7 @@ func NewTemplate() *Template {
 			"name": func(x types.Figure) string {
 				return x.Name()
 			},
-		}).ParseGlob("./web/*.tmpl")),
+		}).ParseGlob("./web/*")),
 	}
 }
 
@@ -64,27 +65,61 @@ func main() {
 }
 
 func Hello(c echo.Context) error {
-	return c.Render(http.StatusOK, "board.html.tmpl", game)
+	return c.Render(http.StatusOK, "board.html", game.GetForRender())
 }
 
-func Move(c echo.Context) error {
-	ix, _ := strconv.Atoi(c.QueryParam("ix"))
-	iy, _ := strconv.Atoi(c.QueryParam("iy"))
-	fx, _ := strconv.Atoi(c.QueryParam("fx"))
-	fy, _ := strconv.Atoi(c.QueryParam("fy"))
+var (
+	ErrMissingParameter = errors.New("required parameter missing")
+	ErrWrongParameter   = errors.New("wrong value")
+)
 
+func Move(c echo.Context) error {
+	ix_str := c.QueryParam("ix")
+	if ix_str == "" {
+		c.Error(errors.Join(ErrMissingParameter, errors.New("ix")))
+	}
+	ix, err := strconv.Atoi(ix_str)
+	if err != nil {
+		c.Error(errors.Join(ErrWrongParameter, errors.New("ix"), err))
+	}
+	iy_str := c.QueryParam("iy")
+	if iy_str == "" {
+		c.Error(errors.Join(ErrMissingParameter, errors.New("iy")))
+	}
+	iy, err := strconv.Atoi(c.QueryParam("iy"))
+	if err != nil {
+		c.Error(errors.Join(ErrWrongParameter, errors.New("iy"), err))
+	}
+	fx_str := c.QueryParam("fx")
+	if fx_str == "" {
+		c.Error(errors.Join(ErrMissingParameter, errors.New("fx")))
+	}
+	fx, err := strconv.Atoi(c.QueryParam("fx"))
+	if err != nil {
+		c.Error(errors.Join(ErrWrongParameter, errors.New("fx"), err))
+	}
+	fy_str := c.QueryParam("fy")
+	if fy_str == "" {
+		c.Error(errors.Join(ErrMissingParameter, errors.New("fy")))
+	}
+	fy, err := strconv.Atoi(c.QueryParam("fy"))
+	if err != nil {
+		c.Error(errors.Join(ErrWrongParameter, errors.New("fy"), err))
+	}
 	move, err := types.GetMove(ix, iy, fx, fy)
 	if err != nil {
-		c.Logger().Error(err)
+		c.Error(err)
 	}
 
-	game.MakeMove(move)
+	err = game.MakeMove(move)
 
 	if err != nil {
-		c.Logger().Error(err)
+		game.Error = err.Error()
+	} else {
+		game.Error = ""
 	}
 
-	return c.Render(http.StatusOK, "board.html.tmpl", game.GetForRender())
+	return c.Render(http.StatusOK, "board.html", game.GetForRender())
 }
 
 // var test_case = []types.Piece{
@@ -106,5 +141,5 @@ func Restart(c echo.Context) error {
 	game = board.NewGame([]types.Piece{})
 	c.Logger().Warn("game restated")
 
-	return c.Render(http.StatusOK, "board.html.tmpl", game)
+	return c.Render(http.StatusOK, "board.html", game.GetForRender())
 }

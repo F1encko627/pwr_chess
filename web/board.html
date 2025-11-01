@@ -198,22 +198,23 @@
             <span class="button_top">Exit</span>
         </button>
     </nav>
-    <p>{{ if .IsBlackTurn }}Ходят черные.{{ else }}Ходят белые.{{ end }}{{ if .IsKingChecked }} Шах{{ if .IsCheckmate
-        }} и мат!{{ else }}!{{ end }}{{ end }}</p>
+    <p>{{if .IsBlackTurn}}Ходят черные.{{else}}Ходят белые.{{end}}{{if .IsKingChecked}} Шах{{if .IsCheckmate}} и мат{{end}}!{{end}}</p>
     <div class="board">
         {{range $keyY, $valueY := .Board}}
         <row>
-            {{ range $keyX, $valueX := $valueY }}
-            <button x="{{ $keyX }}" y="{{ $keyY }}"
-                class="cell{{if even $keyX $keyY }} black_cell{{else}} white_cell{{end}}{{if $valueX.White }} white_piece{{else}} black_piece{{end}}"
-                title="Type:{{string $valueX.T}}
-isWhite: {{$valueX.White}}
-Pos: {{string $valueX.Pos}}">{{
-                string $valueX.T }}</button>
-            {{ end }}
+            {{range $keyX, $valueX := $valueY}}
+            <button x="{{$keyX}}" y="{{$keyY}}"
+                class="cell{{if even $keyX $keyY}} black_cell{{else}} white_cell{{end}}{{if $valueX.White}} white_piece{{else}} black_piece{{end}}"
+                title="Type:{{$valueX.T}}
+                isWhite: {{$valueX.White}}
+                Pos: {{$valueX.Pos}}">{{$valueX.T}}</button>
+            {{end}}
         </row>
-        {{ end }}
+        {{end}}
     </div>
+    {{if .Error}}
+    <p>{{.Error}}</p>
+    {{end}}
     <script>
         var secondMove = false;
         var ix, iy, fx, fy;

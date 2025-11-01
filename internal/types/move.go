@@ -9,14 +9,14 @@ type Direction int
 
 const (
 	SAME_SQUARE = iota
-	UP          // same x, asc y
-	LEFT_UP     // desc x, asc y
-	LEFT        // desc x, same y
-	LEFT_DOWN   // desc x, desc y
-	DOWN        // same x, desc y
-	RIGHT_DOWN  // asc x, desc y
-	RIGHT       // asc x, same y
-	RIGHT_UP    // asc x, asc y
+	UP          // ix == fx && iy < fy
+	LEFT_UP     // ix > fx && iy < fy
+	LEFT        // iy == fy && ix > fx
+	LEFT_DOWN   // ix > fx && iy > fy
+	DOWN        // ix == fx && iy > fy
+	RIGHT_DOWN  // ix < fx && iy > fy
+	RIGHT       // iy == fy && ix < fx
+	RIGHT_UP    // ix < fx && iy < fy
 )
 
 type Move struct {
@@ -68,28 +68,35 @@ func (m Move) GetDirection() Direction {
 }
 
 func getMoveDirection(ix, iy, fx, fy int) Direction {
+	/*
+		+-----+-----+
+		|x0;y1|x1;y1|
+		+-----+-----+
+		|x0;y0|x1;y0|
+		+-----+-----+
+	*/
 	if ix == fx && iy < fy {
 		return UP
 	}
-	if ix == fx {
+	if ix == fx && iy > fy {
 		return DOWN
 	}
 	if iy == fy && ix < fx {
 		return RIGHT
 	}
-	if iy == fy {
+	if iy == fy && ix > fx {
 		return LEFT
 	}
-	if ix < fx && iy < fy {
+	if ix > fx && iy < fy {
 		return LEFT_UP
 	}
-	if ix < fx {
+	if ix > fx && iy > fy {
 		return LEFT_DOWN
 	}
-	if ix > fx && iy < fy {
+	if ix < fx && iy < fy {
 		return RIGHT_UP
 	}
-	if ix > fx {
+	if ix < fx && iy > fy {
 		return RIGHT_DOWN
 	}
 	return SAME_SQUARE

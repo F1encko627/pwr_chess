@@ -11,22 +11,33 @@ type Cell struct {
 }
 
 type Board struct {
-	board  [8][8]*Cell
+	board  [8][8]Cell
 	pieces map[bool][]Piece
 }
 
 func GetBoard(initialPieces []Piece) (Board, error) {
 	board := Board{}
+	board.pieces = make(map[bool][]Piece, len(initialPieces))
 	for _, piece := range initialPieces {
 		board.pieces[piece.IsWhite()] = append(board.pieces[piece.IsWhite()], piece)
 		board.GetCell(piece.position).piece =
-			&board.pieces[piece.IsWhite()][len(board.pieces[piece.IsWhite()])]
+			&board.pieces[piece.IsWhite()][len(board.pieces[piece.IsWhite()])-1]
 	}
 	return board, nil
 }
 
+func (b *Board) MakeMove(move Move) {
+	targetCell := b.GetCell(move.GetFinal())
+	if targetCell.piece != nil {
+		targetCell.piece.isTaken = true
+	}
+	targetCell.piece = b.GetCell(move.GetInitial()).piece
+	targetCell.piece.position = move.GetFinal()
+	b.GetCell(move.GetInitial()).piece = nil
+}
+
 func (b *Board) GetCell(pos Position) *Cell {
-	return b.board[pos.GetX()][pos.GetY()]
+	return &b.board[pos.GetX()][pos.GetY()]
 }
 
 func (b *Board) GetPieces(pos Position) map[bool][]Piece {

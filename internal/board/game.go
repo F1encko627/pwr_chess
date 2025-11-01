@@ -1,8 +1,20 @@
 package board
 
 import (
+	"errors"
+	"fmt"
 	"time"
 	"ust_chess/internal/types"
+)
+
+var (
+	ErrDiscoveredCheck  = errors.New("discovered check")
+	ErrGamePaused       = errors.New("game paused")
+	ErrGameEnded        = errors.New("game ended")
+	ErrKingCheckedStill = errors.New("own king checked still")
+	ErrNoPieceToMove    = errors.New("no piece to move")
+	ErrIlligalMove      = errors.New("illigal move")
+	ErrOpponentsTurn    = errors.New("opponent's turn")
 )
 
 type Game struct {
@@ -17,9 +29,8 @@ type Game struct {
 	IsPause           bool
 	EnPassantPawn     *types.Piece
 	LastMoveTime      time.Time
-}
-
-type GameOutDto struct {
+	History           error
+	Error             string
 }
 
 var classic = []types.Piece{
@@ -60,14 +71,121 @@ var classic = []types.Piece{
 	types.MustNewPiece(types.ROOK, false, types.MustNewPos(7, 7)),
 }
 
+/*
+ 1. Проверить что ход возможен (конец игры, пауза, ...)
+    1.1 Вернуть ошибку.
+ 2. Проверить что ходит фигура нужного цвета.
+    2.1 Вернуть ошибку.
+ 3. Проверить что фигура так ходит.
+    3.1 Вернуть ошибку.
+ 4. Сохранить состояние игры.
+ 5. Проверить на шах своему королю.
+    5.1 Откатить состояние игры, вернуть ошибку.
+ 6. Засчитать очки.
+ 7. Проверить на шах другому королю.
+ 8. Сменить ходящую сторону.
+    8.1. Шаха нет - return.
+ 9. Проверить на мат:
+    а) Убрать короля с доски и dummy фигурой проверить позиции вокруг на шах (возможность отойти или взять фигуру, если она рядом).
+    б) вернуть короля на доску.
+    в) Проверить что атакующую фигуру может взять фигура кроме короля (ОПАСНОСТЬ СКРЫТОГО ШАХА!!!)
+    г) Проверить что линию атаки фигуры можно перекрыть фигурой кроме короля (если это не конь)
+*/
 func (g *Game) MakeMove(move types.Move) error {
+	if g.IsPause {
+		return ErrGamePaused
+	}
+	if g.IsCheckmate {
+		return ErrGameEnded
+	}
+	piece := g.Board.GetCell(move.GetInitial()).GetPiece()
+	if piece == nil {
+		return errors.Join(ErrNoPieceToMove, fmt.Errorf("%s", move))
+	}
+	if piece.IsWhite() == g.IsBlackTurn {
+		return ErrOpponentsTurn
+	}
+	if err := piece.MakeMove(move, &g.Board); err != nil {
+		switch {
+		case errors.Is(err, types.ErrEnPassantMove):
+			g.EnPassantPawn = g.Board.GetCell(move.GetInitial()).GetPiece()
+		case errors.Is(err, types.ErrEnPassantTake):
+			pos := types.MustNewPos(0, 0)
+			piece := g.Board.GetCell(pos).GetPiece()
+			piece.Take()
+			piece = nil
+		case errors.Is(err, types.ErrCastleMove):
+			if err := checkForValidCastle(move, &g.Board); err != nil {
+				return errors.Join(ErrIlligalMove, err)
+			}
+		default:
+			return errors.Join(ErrIlligalMove, err)
+		}
+	}
+
+	g.Board.MakeMove(move)
+
+	g.EnPassantPawn = nil
+	g.IsBlackTurn = !g.IsBlackTurn
+
 	return nil
 }
 
-func (g *Game) GetForRender() GameOutDto {
-	return GameOutDto{}
+func checkForValidCastle(move types.Move, board *types.Board) error {
+	return nil
 }
 
+func checkForValidEnpassantTake(move types.Move, board *types.Board) error {
+	return nil
+}
+
+type GameOutDto struct {
+	IsBlackTurn   bool
+	IsKingChecked bool
+	IsCheckmate   bool
+	Board         [][]PieceOutDto
+	Error         string
+}
+
+type PieceOutDto struct {
+	T     string
+	White bool
+	Pos   string
+}
+
+func (g *Game) GetForRender() GameOutDto {
+	pieces := make([][]PieceOutDto, 8)
+	for y := range 8 {
+		pieces[y] = make([]PieceOutDto, 8)
+		for x := range 8 {
+			raw_piece := g.Board.GetCell(types.MustNewPos(x, y)).GetPiece()
+			if raw_piece != nil {
+				pieces[y][x] = PieceOutDto{
+					T:     raw_piece.GetType().String(),
+					White: raw_piece.IsWhite(),
+					Pos:   raw_piece.GetPosition().String(),
+				}
+				continue
+			}
+			pieces[y][x] = PieceOutDto{
+				T:     " ",
+				White: false,
+				Pos:   types.MustNewPos(x, y).String(),
+			}
+		}
+	}
+	return GameOutDto{
+		IsBlackTurn:   g.IsBlackTurn,
+		IsKingChecked: g.IsKingChecked,
+		IsCheckmate:   g.IsCheckmate,
+		Board:         pieces,
+		Error:         g.Error,
+	}
+}
+
+/*
+Проверять состояние игры на шах и мат сразу при создании.
+*/
 func NewGame(pieces []types.Piece) Game {
 	board, err := types.GetBoard(classic)
 	if err != nil {
